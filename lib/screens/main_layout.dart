@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../data/dummy_repository.dart'; // ✅ 추가
 import 'home_screen.dart';
 import 'post_screen.dart';
-import 'discussion_list_screen.dart';
-import 'myscene_screen.dart';
-import 'mypage_screen.dart';
 import 'community_screen.dart';
+import 'my_scene_screen.dart';
+import 'mypage_screen.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -17,12 +17,17 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    PostScreen(),
-    CommunityScreen(),
-    MySceneScreen(),
-    MyPageScreen(),
+  final List<Widget> _pages = [
+    const HomeScreen(),
+    const PostScreen(),
+    const CommunityScreen(),
+    // ✅ DummyRepository 데이터 연결
+    MySceneScreen(
+      quotes: DummyRepository.quotes,
+      sceneGroups: DummyRepository.sceneGroups,
+      notes: DummyRepository.notes,
+    ),
+    const MyPageScreen(),
   ];
 
   void _onItemTapped(int index) {

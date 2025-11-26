@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'settings_screen.dart'; // ✅ 추가
 
 class MyPageScreen extends StatelessWidget {
   const MyPageScreen({super.key});
@@ -11,10 +12,18 @@ class MyPageScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         title: const Text('마이페이지'),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.settings, color: AppColors.textPrimary),
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+              child: const Icon(Icons.settings, color: AppColors.textPrimary),
+            ),
           ),
         ],
       ),
@@ -150,7 +159,8 @@ class MyPageScreen extends StatelessWidget {
                       "2025년 6월",
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
-                    Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
+                    Icon(Icons.keyboard_arrow_down,
+                        color: AppColors.textSecondary),
                   ],
                 ),
               ],
@@ -182,7 +192,8 @@ class MyPageScreen extends StatelessWidget {
                   GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 7,
                       crossAxisSpacing: 4,
                       mainAxisSpacing: 4,
@@ -208,7 +219,10 @@ class MyPageScreen extends StatelessWidget {
                             : Center(
                           child: Text(
                             "${index + 1}",
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       );

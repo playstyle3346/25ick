@@ -8,6 +8,7 @@ class DummyRepository {
     content: '여기에 게시물 내용이 표시됩니다.',
     imageUrl: 'https://loremflickr.com/600/400/nature?random=$index',
     title: '게시물 제목 ${index + 1}',
+    dislikes: 0,
   ));
 
   // 대사 데이터

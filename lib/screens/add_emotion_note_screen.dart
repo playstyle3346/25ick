@@ -13,11 +13,29 @@ class _AddEmotionNoteScreenState extends State<AddEmotionNoteScreen> {
   final _titleCtrl = TextEditingController();
   final _bodyCtrl = TextEditingController();
 
+  // ✨ [추가됨] 화면이 종료될 때 컨트롤러를 정리해주는 함수 (메모리 누수 방지)
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _bodyCtrl.dispose();
+    super.dispose();
+  }
+
   void _saveNote() {
     final title = _titleCtrl.text.trim();
     final body = _bodyCtrl.text.trim();
 
-    if (title.isEmpty || body.isEmpty) return;
+    // ✨ [수정됨] 내용이 비어있으면 SnackBar로 안내 메시지 띄우기
+    if (title.isEmpty || body.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('제목과 내용을 모두 입력해주세요.'),
+          backgroundColor: Colors.redAccent, // 경고 느낌의 색상
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
     final note = EmotionNote(
       title: title,
@@ -36,6 +54,7 @@ class _AddEmotionNoteScreenState extends State<AddEmotionNoteScreen> {
             style: TextStyle(
                 color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.background,
+        elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: Padding(
@@ -84,9 +103,12 @@ class _AddEmotionNoteScreenState extends State<AddEmotionNoteScreen> {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text("저장하기",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
           ],

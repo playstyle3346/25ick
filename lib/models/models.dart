@@ -6,6 +6,8 @@ class Post {
   final String title;
   int likes;
   bool isLiked;
+  int dislikes;    // 싫어요 수
+  bool isDisliked; // 싫어요 눌렀는지 여부
   List<String> comments;
 
   Post({
@@ -16,6 +18,8 @@ class Post {
     required this.title,
     this.likes = 0,
     this.isLiked = false,
+    this.dislikes = 0,
+    this.isDisliked = false,
     List<String>? comments,
   }) : this.comments = comments ?? [];
 }

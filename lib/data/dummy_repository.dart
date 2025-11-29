@@ -1,10 +1,10 @@
 import '../models/models.dart';
 
 class DummyRepository {
-  // 기본 placeholder 이미지 (assets에 반드시 추가해야 함)
+  // 기본 이미지 placeholder
   static const String placeholder = "assets/posters/lalaland.jpg";
 
-  // 포스트 데이터 (모두 AssetImage로 변경)
+  // 포스트 데이터 (모두 AssetImage 기반)
   static final List<Post> posts = List.generate(
     5,
         (index) => Post(
@@ -16,7 +16,7 @@ class DummyRepository {
     ),
   );
 
-  // 대사 데이터 (picsum → asset)
+  // 대사 데이터
   static final List<Quote> quotes = [
     Quote(
       text: "개츠비는 그 초록색 불빛을 믿었습니다.",
@@ -35,7 +35,7 @@ class DummyRepository {
     ),
   ];
 
-  // 장면 데이터 (모두 asset)
+  // 장면 데이터
   static final List<SceneGroup> sceneGroups = [
     SceneGroup(
       title: "중경삼림 (1994)",
@@ -56,7 +56,7 @@ class DummyRepository {
     ),
   ];
 
-  // 감성노트 (이미 정상)
+  // 감성노트
   static final List<EmotionNote> notes = [
     EmotionNote(
       title: "오늘 '애프터썬'을 보고",

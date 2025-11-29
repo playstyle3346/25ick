@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../../../theme/app_colors.dart';
 import 'movie_preference_vs_screen.dart';
 
 class MoviePreferenceStartScreen extends StatelessWidget {

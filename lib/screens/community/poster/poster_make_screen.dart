@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../theme/app_colors.dart';
 
 class PosterMakeScreen extends StatefulWidget {
   const PosterMakeScreen({super.key});
@@ -9,7 +11,8 @@ class PosterMakeScreen extends StatefulWidget {
 }
 
 class _PosterMakeScreenState extends State<PosterMakeScreen> {
-  String? selectedPoster;
+  File? _uploadedImage;
+  String? selectedPoster; // assets 선택한 포스터
   final TextEditingController _textController = TextEditingController();
 
   final List<String> posters = [
@@ -19,6 +22,19 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
     "assets/posters/poster4.jpg",
     "assets/posters/poster5.jpg",
   ];
+
+  /// 🔥 업로드 이미지 선택
+  Future<void> pickUserImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+
+    if (file != null) {
+      setState(() {
+        _uploadedImage = File(file.path);
+        selectedPoster = null; // 업로드하면 기존 선택 해제
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,68 +48,59 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// -------------------------------
+            /// 포스터 선택 안내
+            /// -------------------------------
             const Text(
               "포스터를 선택하세요",
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
             const SizedBox(height: 16),
 
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: posters.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemBuilder: (context, index) {
-                final img = posters[index];
-                final isSelected = selectedPoster == img;
-
-                return InkWell(
-                  onTap: () {
-                    setState(() => selectedPoster = img);
-                  },
-                  child: Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: DecorationImage(
-                            image: AssetImage(img),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      if (isSelected)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.primary,
-                              width: 3,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.check,
-                                color: AppColors.primary, size: 40),
-                          ),
-                        ),
-                    ],
+            /// -------------------------------
+            /// 🔥 사용자 업로드 버튼
+            /// -------------------------------
+            InkWell(
+              onTap: pickUserImage,
+              child: Container(
+                width: double.infinity,
+                height: 220,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primary,
+                    width: 2,
                   ),
-                );
-              },
+                ),
+                child: _uploadedImage == null
+                    ? const Center(
+                  child: Text(
+                    "내 사진 업로드하기",
+                    style: TextStyle(color: AppColors.primary, fontSize: 16),
+                  ),
+                )
+                    : ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.file(
+                    _uploadedImage!,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
 
+
+            /// -------------------------------
+            /// 포스터 문구 입력
+            /// -------------------------------
             const Text(
               "포스터 문구 입력",
               style: TextStyle(color: Colors.white, fontSize: 18),
@@ -102,7 +109,6 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
 
             TextField(
               controller: _textController,
-              maxLines: 1,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "포스터에 들어갈 문구",
@@ -120,13 +126,16 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
 
             const SizedBox(height: 30),
 
+            /// -------------------------------
+            /// 미리보기 버튼
+            /// -------------------------------
             Center(
               child: InkWell(
                 onTap: () {
-                  if (selectedPoster == null) {
+                  if (_uploadedImage == null && selectedPoster == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("포스터를 선택해주세요."),
+                        content: Text("포스터를 선택하거나 업로드해주세요."),
                       ),
                     );
                     return;
@@ -136,7 +145,8 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PosterPreviewScreen(
-                        posterPath: selectedPoster!,
+                        imageFile: _uploadedImage,
+                        assetPath: selectedPoster,
                         text: _textController.text,
                       ),
                     ),
@@ -145,13 +155,10 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.primary),
                     borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: AppColors.primary),
                   ),
-                  child: const Text(
-                    "미리보기",
-                    style: TextStyle(color: AppColors.primary),
-                  ),
+                  child: const Text("미리보기", style: TextStyle(color: AppColors.primary)),
                 ),
               ),
             )
@@ -162,24 +169,31 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
   }
 }
 
-// 🔥 미리보기 화면
+/// --------------------------------------------------------------
+/// 🔥 미리보기 화면
+/// --------------------------------------------------------------
 class PosterPreviewScreen extends StatelessWidget {
-  final String posterPath;
+  final File? imageFile; // 업로드 이미지
+  final String? assetPath; // assets 이미지
   final String text;
 
   const PosterPreviewScreen({
     super.key,
-    required this.posterPath,
+    required this.imageFile,
+    required this.assetPath,
     required this.text,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Widget posterWidget = imageFile != null
+        ? Image.file(imageFile!, width: 300, fit: BoxFit.cover)
+        : Image.asset(assetPath!, width: 300, fit: BoxFit.cover);
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -189,14 +203,10 @@ class PosterPreviewScreen extends StatelessWidget {
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
-            Image.asset(
-              posterPath,
-              width: 300,
-              fit: BoxFit.cover,
-            ),
+            posterWidget,
             Container(
               width: 300,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               color: Colors.black.withOpacity(0.6),
               child: Text(
                 text,
@@ -204,9 +214,10 @@ class PosterPreviewScreen extends StatelessWidget {
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
+            )
           ],
         ),
       ),

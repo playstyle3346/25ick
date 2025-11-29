@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-import 'discussion_list_screen.dart';
-import 'movie_preference_start_screen.dart';
-import 'poster_make_screen.dart';
+import 'community/discussion/discussion_list_screen.dart';
+import 'community/preference/movie_preference_start_screen.dart';
+import 'community/poster/poster_make_screen.dart';
 
 
 class CommunityScreen extends StatelessWidget {

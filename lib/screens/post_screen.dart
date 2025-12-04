@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/models.dart';
 import '../../data/dummy_repository.dart';
-import 'post_detail_screen.dart';
+import '../../widgets/post_card.dart';
+import 'post_write_screen.dart';
 
 class PostScreen extends StatefulWidget {
   const PostScreen({super.key});
@@ -13,12 +14,54 @@ class PostScreen extends StatefulWidget {
 
 class _PostScreenState extends State<PostScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<Post> posts = DummyRepository.posts;
+
+  // 게시물 데이터를 로컬 상태로 관리
+  late List<Post> _posts;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _posts = List.from(DummyRepository.posts);
+  }
+
+  // 글쓰기 화면 이동
+  void _navigateToWriteScreen() async {
+    final newPost = await Navigator.push<Post>(
+      context,
+      MaterialPageRoute(builder: (_) => const PostWriteScreen()),
+    );
+
+    if (newPost != null) {
+      setState(() {
+        _posts.insert(0, newPost);
+      });
+    }
+  }
+
+  // 탭에 따라 정렬된 리스트 반환
+  List<Post> _getSortedPosts(int tabIndex) {
+    List<Post> sortedList = List.from(_posts);
+
+    switch (tabIndex) {
+      case 0: // 최신순
+        sortedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return sortedList;
+      case 1: // 인기순 (좋아요 많은 순)
+      // 좋아요 숫자가 같으면 최신순으로 2차 정렬 (더 자연스러운 UX를 위해)
+        sortedList.sort((a, b) {
+          int compare = b.likes.compareTo(a.likes);
+          if (compare == 0) {
+            return b.createdAt.compareTo(a.createdAt);
+          }
+          return compare;
+        });
+        return sortedList;
+      case 2: // 팔로우
+        return sortedList.where((p) => p.isFollowed).toList();
+      default:
+        return sortedList;
+    }
   }
 
   @override
@@ -46,82 +89,39 @@ class _PostScreenState extends State<PostScreen> with SingleTickerProviderStateM
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildPostList(posts),
-          _buildPostList(posts.reversed.toList()),
-          _buildPostList(posts.take(3).toList()),
+          _buildPostList(_getSortedPosts(0)),
+          _buildPostList(_getSortedPosts(1)),
+          _buildPostList(_getSortedPosts(2)),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToWriteScreen,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.edit, color: Colors.black),
       ),
     );
   }
 
   Widget _buildPostList(List<Post> postList) {
+    if (postList.isEmpty) {
+      return const Center(
+        child: Text("게시물이 없습니다.", style: TextStyle(color: AppColors.textSecondary)),
+      );
+    }
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: 16, bottom: 80),
       itemCount: postList.length,
       itemBuilder: (context, index) {
-        final post = postList[index];
-        return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => PostDetailScreen(post: post),
-            ),
-          ),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(post),
-                const SizedBox(height: 10),
-                Text(post.title,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16)),
-                const SizedBox(height: 6),
-                Text(post.content,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 13)),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    post.imageUrl,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        return PostCard(
+          post: postList[index],
+          // ✨ [핵심 수정] 카드의 좋아요 상태가 변하면 화면을 다시 그려서 정렬 갱신!
+          onLikeChanged: () {
+            setState(() {
+              // 화면을 다시 그리면 _getSortedPosts가 다시 실행되어 순서가 바뀜
+            });
+          },
         );
       },
-    );
-  }
-
-  Widget _buildHeader(Post post) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 16,
-          backgroundImage: NetworkImage(post.userAvatarUrl),
-        ),
-        const SizedBox(width: 8),
-        Text(post.username,
-            style: const TextStyle(
-                color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-        const Spacer(),
-        Text("3분 전",
-            style:
-            const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-      ],
     );
   }
 }

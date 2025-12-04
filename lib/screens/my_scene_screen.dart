@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-import '../../models/models.dart';
+// ✨ 데이터 저장소 import
+import '../../data/dummy_repository.dart';
 import '../../widgets/scene_menu_card.dart';
 import 'emotion_note_screen.dart';
 import 'quote_archive_screen.dart';
 import 'scene_archive_screen.dart';
 
 class MySceneScreen extends StatelessWidget {
-  final List<Quote> quotes;
-  final List<SceneGroup> sceneGroups;
-  final List<EmotionNote> notes;
+  // ❌ 이전 코드: 부모로부터 데이터를 받아오는 방식 (삭제됨)
+  // final List<Quote> quotes;
+  // final List<SceneGroup> sceneGroups;
+  // final List<EmotionNote> notes;
 
-  const MySceneScreen({
-    super.key,
-    required this.quotes,
-    required this.sceneGroups,
-    required this.notes,
-  });
+  // ✨ 수정된 코드: 인자 없이 생성
+  const MySceneScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,18 +27,21 @@ class MySceneScreen extends StatelessWidget {
               color: AppColors.textPrimary,
             )),
         backgroundColor: AppColors.background,
+        elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           SceneMenuCard(
             title: '장면 보관함',
-            imageUrl: 'https://picsum.photos/id/101/800/600',
+            // ✨ 에셋 이미지 사용
+            imageUrl: 'assets/images/scene1.jpg',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => SceneArchiveScreen(sceneGroups: sceneGroups),
+                  // ✨ DummyRepository에서 직접 데이터 가져오기
+                  builder: (_) => SceneArchiveScreen(sceneGroups: DummyRepository.sceneGroups),
                 ),
               );
             },
@@ -48,12 +49,14 @@ class MySceneScreen extends StatelessWidget {
           const SizedBox(height: 16),
           SceneMenuCard(
             title: '대사 보관함',
-            imageUrl: 'https://picsum.photos/id/103/800/600',
+            // ✨ 에셋 이미지 사용
+            imageUrl: 'assets/images/scene2.jpg',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => QuoteArchiveScreen(quotes: quotes),
+                  // ✨ DummyRepository에서 직접 데이터 가져오기
+                  builder: (_) => QuoteArchiveScreen(quotes: DummyRepository.quotes),
                 ),
               );
             },
@@ -61,12 +64,14 @@ class MySceneScreen extends StatelessWidget {
           const SizedBox(height: 16),
           SceneMenuCard(
             title: '감성 노트',
-            imageUrl: 'https://picsum.photos/id/105/800/600',
+            // ✨ 에셋 이미지 사용
+            imageUrl: 'assets/images/scene3.jpg', // 노트 관련 이미지로 설정
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => EmotionNoteScreen(notes: notes),
+                  // ✨ DummyRepository에서 직접 데이터 가져오기
+                  builder: (_) => EmotionNoteScreen(notes: DummyRepository.notes),
                 ),
               );
             },

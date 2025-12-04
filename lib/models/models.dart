@@ -4,11 +4,19 @@ class Post {
   final String content;
   final String imageUrl;
   final String title;
+
+  // 좋아요/싫어요
   int likes;
   bool isLiked;
-  int dislikes;    // 싫어요 수
-  bool isDisliked; // 싫어요 눌렀는지 여부
+  int dislikes;
+  bool isDisliked;
+
+  // 댓글
   List<String> comments;
+
+  // ✨ 정렬 및 필터링을 위한 필수 데이터
+  final DateTime createdAt; // 작성 시간
+  final bool isFollowed;    // 팔로우 여부
 
   Post({
     required this.username,
@@ -21,7 +29,11 @@ class Post {
     this.dislikes = 0,
     this.isDisliked = false,
     List<String>? comments,
-  }) : this.comments = comments ?? [];
+    DateTime? createdAt,
+    this.isFollowed = false,
+  }) :
+        this.comments = comments ?? [],
+        this.createdAt = createdAt ?? DateTime.now(); // 시간 없으면 현재 시간으로 설정
 }
 
 class Quote {

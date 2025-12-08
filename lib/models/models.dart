@@ -1,29 +1,100 @@
+// =============================
+// Post Model
+// =============================
 class Post {
   final String username;
   final String userAvatarUrl;
+
+  final String title;
   final String content;
   final String imageUrl;
-  final String title;
+
+  // 좋아요/싫어요
   int likes;
   bool isLiked;
-  int dislikes;    // 싫어요 수
-  bool isDisliked; // 싫어요 눌렀는지 여부
+  int dislikes;
+  bool isDisliked;
+
+  // 댓글
   List<String> comments;
+
+  // 정렬/필터링용
+  final DateTime createdAt;
+  bool isFollowed;
 
   Post({
     required this.username,
     required this.userAvatarUrl,
+    required this.title,
     required this.content,
     required this.imageUrl,
-    required this.title,
     this.likes = 0,
     this.isLiked = false,
     this.dislikes = 0,
     this.isDisliked = false,
     List<String>? comments,
-  }) : this.comments = comments ?? [];
+    DateTime? createdAt,
+    this.isFollowed = false,
+  })  : comments = comments ?? [],
+        createdAt = createdAt ?? DateTime.now();
+
+  // ---------------------
+  // ✨ 유틸 메서드
+  // ---------------------
+
+  /// 좋아요 toggle
+  void toggleLike() {
+    if (isLiked) {
+      isLiked = false;
+      likes--;
+    } else {
+      isLiked = true;
+      likes++;
+
+      if (isDisliked) {
+        isDisliked = false;
+        dislikes--;
+      }
+    }
+  }
+
+  /// 싫어요 toggle
+  void toggleDislike() {
+    if (isDisliked) {
+      isDisliked = false;
+      dislikes--;
+    } else {
+      isDisliked = true;
+      dislikes++;
+
+      if (isLiked) {
+        isLiked = false;
+        likes--;
+      }
+    }
+  }
+
+  /// 댓글 추가
+  void addComment(String text) {
+    comments.add(text);
+  }
+
+  /// 댓글 삭제
+  void deleteComment(int index) {
+    comments.removeAt(index);
+  }
+
+  /// 팔로우 토글
+  void toggleFollow() {
+    isFollowed = !isFollowed;
+  }
 }
 
+
+
+// =============================
+// Quote Model
+// =============================
 class Quote {
   String text;
   String source;
@@ -36,6 +107,11 @@ class Quote {
   });
 }
 
+
+
+// =============================
+// Scene Models
+// =============================
 class SceneItem {
   String imageUrl;
   SceneItem({required this.imageUrl});
@@ -51,6 +127,11 @@ class SceneGroup {
   });
 }
 
+
+
+// =============================
+// Emotion Note Model
+// =============================
 class EmotionNote {
   String title;
   String body;

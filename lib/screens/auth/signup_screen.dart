@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../services/auth_service.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -14,21 +15,42 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
 
-  void _signup() {
+  bool _isLoading = false;
+  final AuthService _authService = AuthService();
+
+  void _signup() async {
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
     final name = _nameCtrl.text.trim();
 
-    if (email.isEmpty || password.isEmpty || name.isEmpty) return;
+    if (email.isEmpty || password.isEmpty || name.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("모든 항목을 입력해주세요.")));
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("$name님, 회원가입이 완료되었습니다!")),
+    setState(() => _isLoading = true);
+
+    final error = await _authService.signup(
+      email: email,
+      password: password,
+      nickname: name,
     );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
+    setState(() => _isLoading = false);
+
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("$name님, 환영합니다! 로그인해주세요.")),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   @override
@@ -54,13 +76,15 @@ class _SignupScreenState extends State<SignupScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _signup,
+                onPressed: _isLoading ? null : _signup,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text("회원가입 완료",
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.black)
+                    : const Text("회원가입 완료",
                     style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),

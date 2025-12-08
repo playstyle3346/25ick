@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
-import '../../community_screen.dart';
+import '../community_screen.dart';
 import '../../../services/movie_algorithm.dart';
 
 /// ===================================================================

@@ -1,7 +1,12 @@
-platform :osx, '10.15'
+platform :osx, '12.0'
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+# ---------------------------
+# 🔥 ARM64 (Apple Silicon) 강제
+# ---------------------------
+ENV['ARCHS'] = 'arm64'
+ENV['ONLY_ACTIVE_ARCH'] = 'YES'
 
 project 'Runner', {
   'Debug' => :debug,
@@ -19,7 +24,7 @@ def flutter_root
     matches = line.match(/FLUTTER_ROOT\=(.*)/)
     return matches[1].strip if matches
   end
-  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Flutter-Generated.xcconfig, then run \"flutter pub get\""
+  raise "FLUTTER_ROOT not found"
 end
 
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
@@ -28,8 +33,16 @@ flutter_macos_podfile_setup
 
 target 'Runner' do
   use_frameworks!
+  use_modular_headers!
+
+  # --------------------------------------
+  # 🔥 Firebase + gRPC 충돌 방지 설정
+  # --------------------------------------
+  pod 'gRPC-C++', :modular_headers => true
+  pod 'BoringSSL-GRPC', :modular_headers => true
 
   flutter_install_all_macos_pods File.dirname(File.realpath(__FILE__))
+
   target 'RunnerTests' do
     inherit! :search_paths
   end
@@ -38,5 +51,10 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
+
+    # 모든 Pods의 Deployment Target 강제로 올리기
+    target.build_configurations.each do |config|
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '12.0'
+    end
   end
 end

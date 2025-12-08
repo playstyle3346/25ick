@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = "http://localhost:8000";
+  static const String baseUrl = "http://localhost:8001";
 
   /// 회원가입
   Future<String?> signup({

@@ -1,9 +1,34 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
+import '../../../services/auth_service.dart'; // ✅ 닉네임 불러오기용
 import 'movie_preference_vs_screen.dart';
 
-class MoviePreferenceStartScreen extends StatelessWidget {
+class MoviePreferenceStartScreen extends StatefulWidget {
   const MoviePreferenceStartScreen({super.key});
+
+  @override
+  State<MoviePreferenceStartScreen> createState() =>
+      _MoviePreferenceStartScreenState();
+}
+
+class _MoviePreferenceStartScreenState
+    extends State<MoviePreferenceStartScreen> {
+  String nickname = "영화팬"; // 기본값
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNickname();
+  }
+
+  Future<void> _loadNickname() async {
+    final saved = await AuthService().getSavedNickname();
+    if (mounted) {
+      setState(() {
+        nickname = saved?.isNotEmpty == true ? saved! : "영화팬";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +46,11 @@ class MoviePreferenceStartScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "시애틀고양이님이 선호하는 SF분야 영화를\n분석하고 발견해 드려요.",
+            // ✅ 닉네임 자동 반영
+            Text(
+              "$nickname님이 선호하는 \n 영화 장르를 분석해드려요.",
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 height: 1.6,
@@ -34,8 +60,8 @@ class MoviePreferenceStartScreen extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 40, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -44,7 +70,8 @@ class MoviePreferenceStartScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const MoviePreferenceVsScreen()),
+                    builder: (_) => const MoviePreferenceVsScreen(),
+                  ),
                 );
               },
               child: const Text(
@@ -54,7 +81,7 @@ class MoviePreferenceStartScreen extends StatelessWidget {
                   fontSize: 18,
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),

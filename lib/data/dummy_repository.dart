@@ -1,3 +1,4 @@
+import 'dart:math';
 import '../models/models.dart';
 
 class DummyRepository {
@@ -5,39 +6,51 @@ class DummyRepository {
   // [핵심 1] 로그인한 유저 정보 & 통계 데이터
   // ====================================================
 
-  // 로그인 상태에 따라 이름이 바뀝니다. (기본값: Guest)
   static String myName = "Guest";
   static String myProfileImage = "assets/posters/insideout.jpg";
-
-  // [추가] 내가 쓴 댓글 개수 (마이페이지 연동용)
   static int myCommentCount = 0;
 
-  // ----------------------------------------------------
-  // [기능] 로그인/회원가입 성공 시 호출 -> 내 이름을 기억함!
-  // ----------------------------------------------------
   static void setLoggedInUser(String name, String profileImage) {
     myName = name;
     myProfileImage = profileImage;
   }
 
-  // ----------------------------------------------------
-  // [기능] 새 포스트 저장 (마이페이지 '내가 쓴 글' 카운팅 & 홈 화면 추가)
-  // ----------------------------------------------------
   static void addPost(Post newPost) {
-    // 리스트의 맨 앞(0번 인덱스)에 추가해야 최신글로 뜹니다.
     posts.insert(0, newPost);
   }
 
-  // ----------------------------------------------------
-  // [기능] 댓글 개수 증가 (마이페이지 '작성한 댓글' 카운팅)
-  // ----------------------------------------------------
   static void incrementCommentCount() {
     myCommentCount++;
   }
 
+  // ====================================================
+  // [랜덤 닉네임 리스트 추가 💬]
+  // ====================================================
+  static final List<String> randomNicknames = [
+    "시네필로",
+    "무비덕후",
+    "감성파 고양이",
+    "팝콘요정",
+    "필름러버",
+    "밤하늘별빛",
+    "라라랜드러버",
+    "스릴러광",
+    "영화광인간",
+    "드라마퀸",
+    "감정폭발러",
+    "시간여행자",
+    "필름소울",
+    "유니버스러버",
+    "무비홀릭",
+  ];
+
+  static String getRandomNickname() {
+    final rand = Random();
+    return randomNicknames[rand.nextInt(randomNicknames.length)];
+  }
 
   // ====================================================
-  // [기존 데이터] 변경 없이 그대로 유지
+  // [기존 더미 데이터]
   // ====================================================
 
   static const String placeholder = "assets/posters/lalaland.jpg";
@@ -66,29 +79,37 @@ class DummyRepository {
     '부산행 (2016)',
   ];
 
-  // static List로 선언하여 추가/삭제가 가능하도록 함
+  // ✅ 랜덤 닉네임 + 랜덤 프로필이미지 적용
   static List<Post> posts = List.generate(5, (index) {
-    return Post(
-      username: 'MovieFan ${index + 1}',
-      userAvatarUrl: index % 2 == 0
-          ? 'assets/posters/insideout.jpg'
-          : 'assets/posters/getout.jpg',
+    final nickname = getRandomNickname();
+    final avatarList = [
+      'assets/posters/insideout.jpg',
+      'assets/posters/getout.jpg',
+      'assets/posters/avengers.jpg',
+      'assets/posters/interstellar.jpg',
+      'assets/posters/parasite.jpg',
+    ];
+    final avatar = avatarList[Random().nextInt(avatarList.length)];
 
+    return Post(
+      username: nickname,
+      userAvatarUrl: avatar,
       title: _movieTitles[index],
       content: _postContents[index],
       imageUrl: _moviePosters[index],
-
       likes: 0,
       dislikes: 0,
       comments: [],
-
       createdAt: DateTime.now().subtract(Duration(hours: index * 5)),
-      isFollowed: index % 2 == 0,
+      isFollowed: index.isEven,
       isLiked: false,
       isDisliked: false,
     );
   });
 
+  // ====================================================
+  // 나머지 더미 데이터 동일
+  // ====================================================
   static final List<Quote> quotes = [
     Quote(
       text: "I am Iron Man.",

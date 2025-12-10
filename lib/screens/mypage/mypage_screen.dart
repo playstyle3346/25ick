@@ -218,7 +218,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
-          children: [
+          children: [i
             // 🔸 년/월 선택
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -4,9 +4,9 @@ import 'dart:typed_data';
 /// 댓글 모델
 /// =============================
 class Comment {
-  final String username;   // 작성자 이름
-  final String text;       // 댓글 내용
-  final String? avatarUrl; // 프로필 사진 (선택)
+  final String username;    // 작성자 이름
+  final String text;        // 댓글 내용
+  final String? avatarUrl;  // 프로필 이미지 (선택)
 
   Comment({
     required this.username,
@@ -17,8 +17,8 @@ class Comment {
 
 /// =============================
 /// 커뮤니티 포스트 모델
-///  - 에셋 포스터: imageUrl (선택)
-///  - 업로드 이미지: imageBytes (선택)
+///  - imageUrl: 에셋 이미지
+///  - imageBytes: 업로드 이미지
 /// =============================
 class Post {
   final String username;
@@ -27,19 +27,22 @@ class Post {
   final String title;
   final String content;
 
-  /// 에셋 이미지 경로 (예: "assets/posters/insideout.jpg")
+  /// 에셋 이미지 경로
   final String? imageUrl;
 
-  /// 사용자가 업로드한 이미지 (웹/앱 공통)
+  /// 업로드 이미지
   final Uint8List? imageBytes;
 
+  // 좋아요/싫어요
   int likes;
   bool isLiked;
   int dislikes;
   bool isDisliked;
 
+  // 댓글 리스트
   List<Comment> comments;
 
+  // 정렬/필터링
   final DateTime createdAt;
   bool isFollowed;
 
@@ -60,9 +63,7 @@ class Post {
   })  : comments = comments ?? [],
         createdAt = createdAt ?? DateTime.now();
 
-  /// ---------------------
-  /// 유틸 메서드
-  /// ---------------------
+  /// 좋아요 토글
   void toggleLike() {
     if (isLiked) {
       isLiked = false;
@@ -77,6 +78,7 @@ class Post {
     }
   }
 
+  /// 싫어요 토글
   void toggleDislike() {
     if (isDisliked) {
       isDisliked = false;
@@ -91,29 +93,26 @@ class Post {
     }
   }
 
-  void addComment(Comment comment) {
-    comments.add(comment);
-  }
+  /// 댓글 추가
+  void addComment(Comment comment) => comments.add(comment);
 
-  void deleteComment(int index) {
-    comments.removeAt(index);
-  }
+  /// 댓글 삭제
+  void deleteComment(int index) => comments.removeAt(index);
 
-  void toggleFollow() {
-    isFollowed = !isFollowed;
-  }
+  /// 팔로우 토글
+  void toggleFollow() => isFollowed = !isFollowed;
 }
 
 /// =============================
-/// 명대사 모델
-///  - 기존 에셋 포스터: imageUrl
-///  - 새로 업로드: imageBytes
+/// 명대사 모델 (Quote)
+///  - imageUrl: 에셋 이미지
+///  - imageBytes: 업로드 이미지
 /// =============================
 class Quote {
-  String text;           // 대사 내용
-  String source;         // 영화 제목 등
-  String? imageUrl;      // 에셋 이미지 경로
-  Uint8List? imageBytes; // 업로드 이미지
+  String text;
+  String source;
+  String? imageUrl;
+  Uint8List? imageBytes;
 
   Quote({
     required this.text,
@@ -124,9 +123,7 @@ class Quote {
 }
 
 /// =============================
-/// 장면 모델
-///  - 에셋 포스터: imageUrl
-///  - 새로 업로드: imageBytes
+/// 장면(Scene) 모델
 /// =============================
 class SceneItem {
   String? imageUrl;       // 에셋 이미지
@@ -149,7 +146,7 @@ class SceneGroup {
 }
 
 /// =============================
-/// 감성 노트 모델
+/// 감성노트 모델
 /// =============================
 class EmotionNote {
   String title;

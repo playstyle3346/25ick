@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../theme/app_colors.dart';
 import 'settings_screen.dart';
 import '../../services/auth_service.dart';
@@ -20,8 +21,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
   final AuthService _auth = AuthService();
   Map<String, dynamic>? userData;
 
-  // 📸 날짜별 이미지 저장용
-  final Map<String, File> _dateImages = {};
+  // 📸 날짜별 이미지 저장 (Web 대응: Uint8List 사용)
+  final Map<String, Uint8List> _dateImages = {};
 
   @override
   void initState() {
@@ -104,6 +105,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 ),
               ),
               const SizedBox(width: 16),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -132,22 +134,18 @@ class _MyPageScreenState extends State<MyPageScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _statBox("내가 쓴 포스트", postCount.toString(), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyPostsScreen()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const MyPostsScreen()));
               }),
               _statBox("작성한 댓글", commentCount.toString(), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyCommentsScreen()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(
+                        builder: (_) => const MyCommentsScreen()));
               }),
               _statBox("팔로워", followerCount.toString(), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyFollowersScreen()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(
+                        builder: (_) => const MyFollowersScreen()));
               }),
             ],
           ),
@@ -161,180 +159,222 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // ✅ 캘린더 (날짜 클릭 시 사진 추가)
-  Widget _buildCalendar() {
-    int currentYear = DateTime.now().year;
-    int currentMonth = DateTime.now().month;
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        final months = List.generate(12, (i) => i + 1);
-        final years = List.generate(6, (i) => DateTime.now().year - i);
-
-        DateTime firstDay = DateTime(currentYear, currentMonth, 1);
-        int daysInMonth = DateTime(currentYear, currentMonth + 1, 0).day;
-        int firstWeekday = firstDay.weekday % 7;
-
-        List<int?> calendarDays = List.generate(
-          firstWeekday + daysInMonth,
-              (index) => index < firstWeekday ? null : index - firstWeekday + 1,
-        );
-
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 🔸 년/월 선택
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  DropdownButton<int>(
-                    value: currentYear,
-                    dropdownColor: AppColors.card,
-                    iconEnabledColor: AppColors.textPrimary,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    underline: const SizedBox(),
-                    items: years
-                        .map((y) =>
-                        DropdownMenuItem(value: y, child: Text("$y년")))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => currentYear = v);
-                    },
+  // -----------------------------------------------------
+  // ✅ 전체 화면 이미지 확대 보기 기능
+  // -----------------------------------------------------
+  void _showFullImage(Uint8List bytes) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            Scaffold(
+              backgroundColor: Colors.black,
+              body: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Center(
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Image.memory(bytes),
                   ),
-                  DropdownButton<int>(
-                    value: currentMonth,
-                    dropdownColor: AppColors.card,
-                    iconEnabledColor: AppColors.textPrimary,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    underline: const SizedBox(),
-                    items: months
-                        .map((m) =>
-                        DropdownMenuItem(value: m, child: Text("$m월")))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => currentMonth = v);
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-
-              // 🔸 요일 헤더
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text("일", style: TextStyle(color: AppColors.textSecondary)),
-                  Text("월", style: TextStyle(color: AppColors.textSecondary)),
-                  Text("화", style: TextStyle(color: AppColors.textSecondary)),
-                  Text("수", style: TextStyle(color: AppColors.textSecondary)),
-                  Text("목", style: TextStyle(color: AppColors.textSecondary)),
-                  Text("금", style: TextStyle(color: AppColors.textSecondary)),
-                  Text("토", style: TextStyle(color: AppColors.textSecondary)),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              // 🔸 날짜 및 이미지 표시
-              GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  crossAxisSpacing: 4,
-                  mainAxisSpacing: 4,
-                  childAspectRatio: 1,
                 ),
-                itemCount: calendarDays.length,
-                itemBuilder: (context, index) {
-                  final day = calendarDays[index];
-                  if (day == null) return const SizedBox.shrink();
+              ),
+            ),
+      ),
+    );
+  }
 
-                  final dateKey = "$currentYear-$currentMonth-$day";
-                  final imageFile = _dateImages[dateKey];
+  // -----------------------------------------------------
+  // 🔸 캘린더 UI
+  // -----------------------------------------------------
+  Widget _buildCalendar() {
+    int currentYear = DateTime
+        .now()
+        .year;
+    int currentMonth = DateTime
+        .now()
+        .month;
 
-                  return GestureDetector(
-                    onTap: () async {
-                      if (imageFile != null) {
-                        // 🗑️ 삭제 다이얼로그
-                        final shouldDelete = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
+    return StatefulBuilder(builder: (context, setState) {
+      final months = List.generate(12, (i) => i + 1);
+      final years = List.generate(6, (i) =>
+      DateTime
+          .now()
+          .year - i);
+
+      DateTime firstDay = DateTime(currentYear, currentMonth, 1);
+      int daysInMonth = DateTime(currentYear, currentMonth + 1, 0).day;
+      int firstWeekday = firstDay.weekday % 7;
+
+      List<int?> calendarDays = List.generate(
+        firstWeekday + daysInMonth,
+            (index) => index < firstWeekday ? null : index - firstWeekday + 1,
+      );
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            // 🔸 년/월 선택
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                DropdownButton<int>(
+                  value: currentYear,
+                  dropdownColor: AppColors.card,
+                  iconEnabledColor: AppColors.textPrimary,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  underline: const SizedBox(),
+                  items: years
+                      .map((y) =>
+                      DropdownMenuItem(value: y, child: Text("$y년")))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => currentYear = v);
+                  },
+                ),
+                DropdownButton<int>(
+                  value: currentMonth,
+                  dropdownColor: AppColors.card,
+                  iconEnabledColor: AppColors.textPrimary,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  underline: const SizedBox(),
+                  items: months
+                      .map((m) =>
+                      DropdownMenuItem(value: m, child: Text("$m월")))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => currentMonth = v);
+                  },
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // 🔸 요일 헤더
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text("일", style: TextStyle(color: AppColors.textSecondary)),
+                Text("월", style: TextStyle(color: AppColors.textSecondary)),
+                Text("화", style: TextStyle(color: AppColors.textSecondary)),
+                Text("수", style: TextStyle(color: AppColors.textSecondary)),
+                Text("목", style: TextStyle(color: AppColors.textSecondary)),
+                Text("금", style: TextStyle(color: AppColors.textSecondary)),
+                Text("토", style: TextStyle(color: AppColors.textSecondary)),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // 🔸 날짜 + 이미지
+            GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                crossAxisSpacing: 4,
+                mainAxisSpacing: 4,
+                childAspectRatio: 1,
+              ),
+              itemCount: calendarDays.length,
+              itemBuilder: (context, index) {
+                final day = calendarDays[index];
+                if (day == null) return const SizedBox.shrink();
+
+                final dateKey = "$currentYear-$currentMonth-$day";
+                final bytes = _dateImages[dateKey];
+
+                return GestureDetector(
+                  onTap: () async {
+                    if (bytes != null) {
+                      // 🖼 사진 확대 보기
+                      _showFullImage(bytes);
+                      return;
+                    }
+
+                    // 사진 업로드
+                    final picker = ImagePicker();
+                    final picked =
+                    await picker.pickImage(source: ImageSource.gallery);
+                    if (picked != null) {
+                      final uploadedBytes = await picked.readAsBytes();
+                      setState(() => _dateImages[dateKey] = uploadedBytes);
+                    }
+                  },
+                  onLongPress: () async {
+                    if (bytes == null) return;
+
+                    final shouldDelete = await showDialog<bool>(
+                      context: context,
+                      builder: (context) =>
+                          AlertDialog(
                             backgroundColor: AppColors.card,
                             title: const Text("사진 삭제",
                                 style: TextStyle(color: AppColors.textPrimary)),
                             content: const Text("사진을 삭제하시겠습니까?",
-                                style: TextStyle(color: AppColors.textSecondary)),
+                                style: TextStyle(
+                                    color: AppColors.textSecondary)),
                             actions: [
                               TextButton(
-                                child: const Text("아니오",
+                                child: const Text("취소",
                                     style: TextStyle(color: Colors.grey)),
                                 onPressed: () => Navigator.pop(context, false),
                               ),
                               TextButton(
-                                child: const Text("예",
+                                child: const Text("삭제",
                                     style: TextStyle(color: Colors.redAccent)),
                                 onPressed: () => Navigator.pop(context, true),
                               ),
                             ],
                           ),
-                        );
+                    );
 
-                        if (shouldDelete == true) {
-                          setState(() {
-                            _dateImages.remove(dateKey);
-                          });
-                        }
-                      } else {
-                        // 📸 새 이미지 추가
-                        final picker = ImagePicker();
-                        final picked = await picker.pickImage(
-                            source: ImageSource.gallery);
-                        if (picked != null) {
-                          setState(() {
-                            _dateImages[dateKey] = File(picked.path);
-                          });
-                        }
-                      }
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[850],
-                        borderRadius: BorderRadius.circular(6),
+                    if (shouldDelete == true) {
+                      setState(() => _dateImages.remove(dateKey));
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[850],
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: bytes != null
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.memory(
+                        bytes,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
                       ),
-                      child: imageFile != null
-                          ? ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.file(imageFile,
-                            fit: BoxFit.cover, width: double.infinity),
-                      )
-                          : Center(
-                        child: Text(
-                          "$day",
-                          style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12),
+                    )
+                        : Center(
+                      child: Text(
+                        "$day",
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  // ✅ 통계 박스 (클릭 가능)
+  // -----------------------------------------------------
+  // 통계 박스
+  // -----------------------------------------------------
   Widget _statBox(String title, String count, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -346,21 +386,18 @@ class _MyPageScreenState extends State<MyPageScreen> {
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              count,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
+            // 🔥 숫자(count) 제거됨!
+
+            // 텍스트(라벨)는 그대로 유지
             Text(
               title,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

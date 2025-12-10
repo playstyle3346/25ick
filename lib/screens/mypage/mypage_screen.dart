@@ -1,16 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_colors.dart';
-import '../settings_screen.dart';
+import 'settings_screen.dart';
 import '../../services/auth_service.dart';
 import '../../state/app_state.dart';
-
-// ✅ 클릭 시 이동할 상세 페이지 import
-import 'my_posts_screen.dart';
-import 'my_comments_screen.dart';
-import 'my_followers_screen.dart';
-
-// ✅ 취향저격 영화 찾기 페이지 import (경로 맞게 확인 필요)
-import '../community/preference/movie_preference_start_screen.dart';
+import '../mypage/my_posts_screen.dart';
+import '../mypage/my_comments_screen.dart';
+import '../mypage/my_followers_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -22,6 +19,9 @@ class MyPageScreen extends StatefulWidget {
 class _MyPageScreenState extends State<MyPageScreen> {
   final AuthService _auth = AuthService();
   Map<String, dynamic>? userData;
+
+  // 📸 날짜별 이미지 저장용
+  final Map<String, File> _dateImages = {};
 
   @override
   void initState() {
@@ -88,7 +88,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1️⃣ 프로필
+          // 🔹 프로필
           Row(
             children: [
               Container(
@@ -127,7 +127,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
           const SizedBox(height: 24),
 
-          // 2️⃣ 통계 (포스트, 댓글, 팔로워)
+          // 🔹 통계 박스
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -154,93 +154,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
           const SizedBox(height: 30),
 
-          // 3️⃣ 취향 찾기
-          _preferenceBox(context),
-
-          const SizedBox(height: 30),
-
-          // 4️⃣ 캘린더
+          // 🔹 캘린더
           _buildCalendar(),
         ],
       ),
     );
   }
 
-  // ✅ 취향 찾기 박스
-  Widget _preferenceBox(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "취향 찾기",
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "\"당신의 취향에 맞는 영화를 찾아드릴게요.\"",
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 140,
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(10),
-                  image: const DecorationImage(
-                    image: AssetImage("assets/posters/lalaland.jpg"),
-                    fit: BoxFit.cover,
-                    opacity: 0.6,
-                  ),
-                ),
-                child: Center(
-                  child: Icon(Icons.movie_filter,
-                      color: Colors.white.withOpacity(0.5), size: 40),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MoviePreferenceStartScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    "나의 취향 확인하기",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ✅ 캘린더 (년도/월별 실제 날짜 표시)
+  // ✅ 캘린더 (날짜 클릭 시 사진 추가)
   Widget _buildCalendar() {
     int currentYear = DateTime.now().year;
     int currentMonth = DateTime.now().month;
@@ -256,8 +177,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
         List<int?> calendarDays = List.generate(
           firstWeekday + daysInMonth,
-              (index) =>
-          index < firstWeekday ? null : index - firstWeekday + 1,
+              (index) => index < firstWeekday ? null : index - firstWeekday + 1,
         );
 
         return Container(
@@ -269,7 +189,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 년/월 선택 드롭다운
+              // 🔸 년/월 선택
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -303,8 +223,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 10),
-              // 요일 헤더
+
+              // 🔸 요일 헤더
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
@@ -317,44 +239,88 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   Text("토", style: TextStyle(color: AppColors.textSecondary)),
                 ],
               ),
+
               const SizedBox(height: 8),
-              // 날짜 표시
+
+              // 🔸 날짜 및 이미지 표시
               GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 4,
-                    childAspectRatio: 0.9),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 4,
+                  mainAxisSpacing: 4,
+                  childAspectRatio: 1,
+                ),
                 itemCount: calendarDays.length,
                 itemBuilder: (context, index) {
                   final day = calendarDays[index];
-                  bool hasRecord = [5, 12, 25].contains(day);
-
                   if (day == null) return const SizedBox.shrink();
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: hasRecord
-                          ? AppColors.primary.withOpacity(0.2)
-                          : Colors.grey[850],
-                      borderRadius: BorderRadius.circular(6),
-                      border:
-                      hasRecord ? Border.all(color: AppColors.primary) : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        "$day",
-                        style: TextStyle(
-                          color: hasRecord
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                          fontWeight: hasRecord
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          fontSize: 12,
+                  final dateKey = "$currentYear-$currentMonth-$day";
+                  final imageFile = _dateImages[dateKey];
+
+                  return GestureDetector(
+                    onTap: () async {
+                      if (imageFile != null) {
+                        // 🗑️ 삭제 다이얼로그
+                        final shouldDelete = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppColors.card,
+                            title: const Text("사진 삭제",
+                                style: TextStyle(color: AppColors.textPrimary)),
+                            content: const Text("사진을 삭제하시겠습니까?",
+                                style: TextStyle(color: AppColors.textSecondary)),
+                            actions: [
+                              TextButton(
+                                child: const Text("아니오",
+                                    style: TextStyle(color: Colors.grey)),
+                                onPressed: () => Navigator.pop(context, false),
+                              ),
+                              TextButton(
+                                child: const Text("예",
+                                    style: TextStyle(color: Colors.redAccent)),
+                                onPressed: () => Navigator.pop(context, true),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (shouldDelete == true) {
+                          setState(() {
+                            _dateImages.remove(dateKey);
+                          });
+                        }
+                      } else {
+                        // 📸 새 이미지 추가
+                        final picker = ImagePicker();
+                        final picked = await picker.pickImage(
+                            source: ImageSource.gallery);
+                        if (picked != null) {
+                          setState(() {
+                            _dateImages[dateKey] = File(picked.path);
+                          });
+                        }
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[850],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: imageFile != null
+                          ? ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.file(imageFile,
+                            fit: BoxFit.cover, width: double.infinity),
+                      )
+                          : Center(
+                        child: Text(
+                          "$day",
+                          style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12),
                         ),
                       ),
                     ),

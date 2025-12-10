@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import 'auth/login_screen.dart';
-import '../services/auth_service.dart';
+import '../../theme/app_colors.dart';
+import '../auth/login_screen.dart';
+import '../../services/auth_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   SettingsScreen({super.key});

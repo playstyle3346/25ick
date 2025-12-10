@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../state/app_state.dart';
+import '../../data/dummy_repository.dart'; // ✅ 추가
 import '../post_detail_screen.dart';
 
 class MyPostsScreen extends StatelessWidget {
@@ -9,9 +10,10 @@ class MyPostsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = AppState();
-    final myName = appState.posts.isNotEmpty
-        ? appState.posts.first.username
-        : "나";
+
+    // ✅ 더 이상 posts.first.username 쓰지 말고,
+    // DummyRepository.myName 을 기준으로 내 게시물 필터링
+    final myName = DummyRepository.myName;
 
     // 내가 쓴 포스트만 필터링
     final myPosts =
@@ -20,15 +22,19 @@ class MyPostsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text("내가 쓴 게시물",
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text(
+          "내가 쓴 게시물",
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         backgroundColor: AppColors.background,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: myPosts.isEmpty
           ? const Center(
-        child: Text("아직 작성한 게시물이 없습니다.",
-            style: TextStyle(color: AppColors.textSecondary)),
+        child: Text(
+          "아직 작성한 게시물이 없습니다.",
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
       )
           : ListView.builder(
         padding: const EdgeInsets.all(12),
@@ -68,7 +74,9 @@ class MyPostsScreen extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 13),
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(

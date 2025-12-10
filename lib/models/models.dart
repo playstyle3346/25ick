@@ -1,5 +1,5 @@
 // =============================
-// ✨ Comment Model (신규 추가)
+// ✨ Comment Model
 // =============================
 class Comment {
   final String username;   // 작성자 이름
@@ -22,7 +22,9 @@ class Post {
 
   final String title;
   final String content;
-  final String imageUrl;
+
+  // ✨ [수정] 이미지가 없을 수도 있으므로 ?(nullable) 추가
+  final String? imageUrl;
 
   // 좋아요/싫어요
   int likes;
@@ -30,7 +32,7 @@ class Post {
   int dislikes;
   bool isDisliked;
 
-  // ✨ [수정] 댓글을 객체(Comment) 리스트로 관리
+  // 댓글 관리
   List<Comment> comments;
 
   // 정렬/필터링용
@@ -42,12 +44,15 @@ class Post {
     required this.userAvatarUrl,
     required this.title,
     required this.content,
-    required this.imageUrl,
+
+    // ✨ [수정] required 제거 & 선택적 파라미터로 변경
+    this.imageUrl,
+
     this.likes = 0,
     this.isLiked = false,
     this.dislikes = 0,
     this.isDisliked = false,
-    List<Comment>? comments, // 생성자 타입 변경
+    List<Comment>? comments,
     DateTime? createdAt,
     this.isFollowed = false,
   })  : comments = comments ?? [],
@@ -87,7 +92,7 @@ class Post {
     }
   }
 
-  /// ✨ [수정] 댓글 추가 (Comment 객체를 받음)
+  /// 댓글 추가
   void addComment(Comment comment) {
     comments.add(comment);
   }

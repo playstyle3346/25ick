@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../models/models.dart';
-import '../state/app_state.dart';
 import '../screens/post_detail_screen.dart';
 
 class PostCard extends StatefulWidget {
@@ -15,24 +14,31 @@ class PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<PostCard> {
+  // 이미지 빌드 함수 (경로에 따라 Asset인지 File인지 구분)
   Widget _buildImage(String url) {
-    if (url.startsWith("assets/")) return Image.asset(url, fit: BoxFit.cover);
-    if (File(url).existsSync()) return Image.file(File(url), fit: BoxFit.cover);
-    return Image.network(url, fit: BoxFit.cover);
+    if (url.startsWith("assets/")) {
+      return Image.asset(url, fit: BoxFit.cover, width: double.infinity, height: 200);
+    }
+    // 파일 경로인 경우 (갤러리에서 가져온 사진)
+    return Image.file(File(url), fit: BoxFit.cover, width: double.infinity, height: 200);
   }
 
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
-    final appState = AppState();
 
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PostDetailScreen(post: post),
-        ),
-      ),
+      onTap: () async {
+        // 상세 페이지로 이동
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PostDetailScreen(post: post),
+          ),
+        );
+        // 상세 페이지에서 좋아요 누르고 돌아왔을 때 화면 갱신
+        setState(() {});
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.all(14),
@@ -65,11 +71,12 @@ class _PostCardState extends State<PostCard> {
                 ),
                 const Spacer(),
 
-                /// ✨ 팔로우 버튼 (토글 기능 & 디자인)
+                /// ✨ 팔로우 버튼 (AppState 제거 -> 직접 상태 변경)
                 GestureDetector(
                   onTap: () {
-                    appState.toggleFollow(post);
-                    // PostScreen은 AppState 리스너를 통해 자동 갱신됨
+                    setState(() {
+                      post.toggleFollow(); // 모델 내부 함수 사용
+                    });
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -113,13 +120,14 @@ class _PostCardState extends State<PostCard> {
 
             const SizedBox(height: 10),
 
-            /// 이미지
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: _buildImage(post.imageUrl),
-            ),
-
-            const SizedBox(height: 10),
+            /// ✨ 이미지 (이미지가 있을 때만 표시!)
+            if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: _buildImage(post.imageUrl!), // ! 붙여서 null 아님을 확신
+              ),
+              const SizedBox(height: 10),
+            ],
 
             // 좋아요/싫어요/댓글 수
             Row(
@@ -131,8 +139,9 @@ class _PostCardState extends State<PostCard> {
                     color: post.isLiked ? AppColors.primary : Colors.grey,
                   ),
                   onPressed: () {
-                    appState.toggleLike(post);
-                    // PostScreen은 AppState 리스너를 통해 자동 갱신되어 인기순 정렬됨
+                    setState(() {
+                      post.toggleLike(); // 모델 내부 함수 사용
+                    });
                   },
                 ),
                 Text("${post.likes}",
@@ -149,7 +158,9 @@ class _PostCardState extends State<PostCard> {
                     color: post.isDisliked ? AppColors.primary : Colors.grey,
                   ),
                   onPressed: () {
-                    appState.toggleDislike(post);
+                    setState(() {
+                      post.toggleDislike();
+                    });
                   },
                 ),
                 Text("${post.dislikes}",
@@ -157,7 +168,7 @@ class _PostCardState extends State<PostCard> {
 
                 const SizedBox(width: 16),
 
-                /// 댓글 아이콘
+                /// 댓글 아이콘q
                 const Icon(Icons.chat_bubble_outline, color: Colors.grey),
                 const SizedBox(width: 4),
                 Text("${post.comments.length}", style: const TextStyle(color: Colors.grey)),

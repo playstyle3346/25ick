@@ -13,30 +13,8 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController _commentController = TextEditingController();
-  late List<Map<String, String>> comments;
 
-  @override
-  void initState() {
-    super.initState();
-
-    // ⭐ 새 글인지 기존 글인지 구분
-    if (widget.post["isNew"] == "true") {
-      comments = [];
-    } else {
-      comments = [
-        {
-          "user": "익명1",
-          "content": "오 저도 궁금했는데 정보 감사합니다!",
-          "image": "assets/posters/getout.jpg"
-        },
-        {
-          "user": "익명2",
-          "content": "완전 공감합니다 ㅋㅋ",
-          "image": "assets/posters/whiplash.jpg"
-        },
-      ];
-    }
-  }
+  List<Map<String, String>> comments = [];
 
   void _addComment() {
     if (_commentController.text.trim().isEmpty) return;
@@ -49,19 +27,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       });
       _commentController.clear();
     });
+
     FocusScope.of(context).unfocus();
   }
 
-  // 🗑 댓글 삭제
   void _deleteComment(int index) {
-    setState(() => comments.removeAt(index));
+    setState(() {
+      comments.removeAt(index);
+    });
   }
 
   Future<void> _confirmDeleteComment(int index) async {
-    final comment = comments[index];
-    if (comment["user"] != DummyRepository.myName) return;
+    final commentUser = comments[index]['user'];
+    if (commentUser != DummyRepository.myName) return;
 
-    final confirmed = await showDialog<bool>(
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.card,
@@ -81,12 +61,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
     );
 
-    if (confirmed == true) _deleteComment(index);
+    if (confirm == true) {
+      _deleteComment(index);
+    }
   }
 
-  // 🗑 게시물 삭제
   Future<void> _confirmDeletePost() async {
-    final confirmed = await showDialog<bool>(
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.card,
@@ -106,11 +87,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
     );
 
-    if (confirmed == true) {
-      Navigator.pop(context); // 이전 화면으로 이동
+    if (confirm == true) {
+      Navigator.pop(context); // 삭제 시 이전 화면으로 돌아가기
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("게시물이 삭제되었습니다."),
+          content: Text('게시물이 삭제되었습니다.'),
           backgroundColor: Colors.redAccent,
           duration: Duration(seconds: 2),
         ),
@@ -126,6 +107,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final post = widget.post;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -136,7 +119,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          widget.post['title']!,
+          post['title']!,
           style: const TextStyle(color: AppColors.textPrimary),
           overflow: TextOverflow.ellipsis,
         ),
@@ -155,125 +138,146 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- 게시글 상단 ---
                   Row(
                     children: [
                       const CircleAvatar(
                         radius: 20,
-                        backgroundImage:
-                        AssetImage("assets/posters/lalaland.jpg"),
+                        backgroundColor: Colors.grey,
+                        backgroundImage: AssetImage("assets/posters/lalaland.jpg"),
                       ),
                       const SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(widget.post['user'] ?? "Unknown",
-                              style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.bold)),
-                          Text(widget.post['time'] ?? "",
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary, fontSize: 12)),
+                          Text(
+                            post['user'] ?? "Unknown",
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            post['time'] ?? "",
+                            style: const TextStyle(
+                                color: AppColors.textSecondary, fontSize: 12),
+                          ),
                         ],
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-
-                  Text(widget.post['title']!,
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold)),
-
+                  Text(
+                    post['title']!,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 20),
-
-                  Text(widget.post['content']!,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 16,
-                          height: 1.6)),
-
+                  Text(
+                    post['content']!,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 16,
+                      height: 1.6,
+                    ),
+                  ),
                   const SizedBox(height: 40),
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 20),
 
-                  // --- 댓글 ---
-                  Text("댓글 ${comments.length}",
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.bold)),
+                  // 댓글 섹션
+                  Text(
+                    "댓글 ${comments.length}",
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 16),
 
-                  if (comments.isEmpty)
-                    const Text("첫 댓글을 남겨보세요!",
-                        style: TextStyle(color: Colors.grey))
-                  else
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: comments.length,
-                      separatorBuilder: (context, index) =>
-                      const SizedBox(height: 16),
-                      itemBuilder: (context, index) {
-                        final c = comments[index];
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundImage: AssetImage(c["image"]!),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(c["user"]!,
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13)),
-                                      if (c["user"] ==
-                                          DummyRepository.myName)
-                                        GestureDetector(
-                                          onTap: () =>
-                                              _confirmDeleteComment(index),
-                                          child: const Icon(
-                                            Icons.more_horiz,
-                                            size: 16,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(c["content"]!,
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: comments.length,
+                    separatorBuilder: (context, index) =>
+                    const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final comment = comments[index];
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.grey,
+                            backgroundImage: comment['image'] != null
+                                ? AssetImage(comment['image']!)
+                                : null,
+                            child: comment['image'] == null
+                                ? const Icon(Icons.person,
+                                size: 20, color: Colors.white)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      comment['user']!,
                                       style: const TextStyle(
-                                          color: Colors.white70, fontSize: 14)),
-                                ],
-                              ),
-                            )
-                          ],
-                        );
-                      },
-                    ),
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    if (comment['user'] ==
+                                        DummyRepository.myName)
+                                      GestureDetector(
+                                        onTap: () =>
+                                            _confirmDeleteComment(index),
+                                        child: const Icon(
+                                          Icons.more_horiz,
+                                          size: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  comment['content']!,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
 
-          // --- 댓글 입력창 ---
+          // 댓글 입력창
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: AppColors.card,
-              border: Border(top: BorderSide(color: Colors.white10)),
+              border: Border(
+                top: BorderSide(color: Colors.white10),
+              ),
             ),
             child: SafeArea(
               child: Row(
@@ -302,11 +306,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: const BoxDecoration(
-                        color: AppColors.primary,
                         shape: BoxShape.circle,
+                        color: AppColors.primary,
                       ),
                       child:
-                      const Icon(Icons.send, size: 20, color: Colors.black),
+                      const Icon(Icons.send, color: Colors.black, size: 20),
                     ),
                   ),
                 ],

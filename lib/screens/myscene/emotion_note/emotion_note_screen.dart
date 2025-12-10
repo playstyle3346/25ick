@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../../models/models.dart';
 import '../../../../theme/app_colors.dart';
 import 'add_emotion_note_screen.dart';
+import 'emotion_note_detail_screen.dart';
 
 class EmotionNoteScreen extends StatefulWidget {
   final List<EmotionNote> notes;
@@ -22,36 +23,40 @@ class _EmotionNoteScreenState extends State<EmotionNoteScreen> {
     _notes = List.from(widget.notes);
   }
 
+  // 새 노트 추가
   void _addNote(EmotionNote note) {
     setState(() => _notes.insert(0, note));
   }
 
-  // ✨ [추가된 기능] 노트 삭제 함수
+  // 노트 삭제
   void _deleteNote(EmotionNote note) {
     setState(() {
       _notes.remove(note);
     });
   }
 
-  // ✨ [추가된 기능] 삭제 확인 대화상자
+  // 삭제 확인 팝업
   Future<void> _showDeleteConfirmDialog(EmotionNote note) async {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: AppColors.card, // 테마에 맞게 배경색 조정
+          backgroundColor: AppColors.card,
           title: const Text('노트 삭제', style: TextStyle(color: AppColors.textPrimary)),
-          content: const Text('이 노트를 삭제하시겠습니까?', style: TextStyle(color: AppColors.textSecondary)),
+          content: const Text('이 노트를 삭제하시겠습니까?',
+              style: TextStyle(color: AppColors.textSecondary)),
           actions: <Widget>[
             TextButton(
-              child: const Text('취소', style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text('취소',
+                  style: TextStyle(color: AppColors.textSecondary)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text('삭제', style: TextStyle(color: Colors.redAccent)),
+              child: const Text('삭제',
+                  style: TextStyle(color: Colors.redAccent)),
               onPressed: () {
-                _deleteNote(note); // 삭제 실행
-                Navigator.of(context).pop(); // 팝업 닫기
+                _deleteNote(note);
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -74,7 +79,15 @@ class _EmotionNoteScreenState extends State<EmotionNoteScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
-      body: ListView(
+      body: _notes.isEmpty
+          ? const Center(
+        child: Text(
+          "작성된 노트가 없습니다.\n오른쪽 아래 + 버튼으로 새 노트를 추가하세요.",
+          style: TextStyle(color: AppColors.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+      )
+          : ListView(
         padding: const EdgeInsets.all(16),
         children: grouped.entries.map((entry) {
           final month = entry.key;
@@ -91,7 +104,6 @@ class _EmotionNoteScreenState extends State<EmotionNoteScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              // 리스트의 각 노트를 카드로 변환
               ...list.map((note) => _buildNoteCard(note)).toList(),
               const SizedBox(height: 24),
             ],
@@ -114,46 +126,59 @@ class _EmotionNoteScreenState extends State<EmotionNoteScreen> {
     );
   }
 
+  // 노트 카드 (상세화면 연결 포함)
   Widget _buildNoteCard(EmotionNote note) {
     final dateStr = DateFormat('yyyy년 M월 d일').format(note.date);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(note.title,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15)),
-                const SizedBox(height: 6),
-                Text(dateStr,
-                    style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 12)),
-              ],
+    return GestureDetector(
+      onTap: () async {
+        // 상세 화면으로 이동
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EmotionNoteDetailScreen(
+              note: note,
+              onDelete: () => _deleteNote(note), // 삭제 콜백 전달
             ),
           ),
-          // ✨ [수정됨] 삭제 팝업 연결
-          IconButton(
-            icon: const Icon(Icons.more_horiz,
-                color: AppColors.textSecondary, size: 20),
-            onPressed: () {
-              _showDeleteConfirmDialog(note); // 버튼 클릭 시 삭제 팝업 호출
-            },
-          ),
-        ],
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(note.title,
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15)),
+                  const SizedBox(height: 6),
+                  Text(dateStr,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12)),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.more_horiz,
+                  color: AppColors.textSecondary, size: 20),
+              onPressed: () => _showDeleteConfirmDialog(note),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  // 월별 그룹핑
   Map<String, List<EmotionNote>> _groupByMonth(List<EmotionNote> notes) {
     final formatter = DateFormat('M월');
     final grouped = <String, List<EmotionNote>>{};
@@ -161,13 +186,13 @@ class _EmotionNoteScreenState extends State<EmotionNoteScreen> {
       final key = formatter.format(note.date);
       grouped.putIfAbsent(key, () => []).add(note);
     }
-    // 월별 정렬 (내림차순 등 필요에 따라 조정 가능)
+
+    // 월 정렬 (최신순)
     final sortedKeys = grouped.keys.toList()
       ..sort((a, b) {
-        // "10월", "9월" 같은 문자열 비교를 위해 숫자만 추출해서 비교
         int monthA = int.parse(a.replaceAll('월', ''));
         int monthB = int.parse(b.replaceAll('월', ''));
-        return monthB.compareTo(monthA); // 내림차순 (최신 월이 위로)
+        return monthB.compareTo(monthA);
       });
 
     return {for (var k in sortedKeys) k: grouped[k]!};

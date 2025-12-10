@@ -10,6 +10,9 @@ import 'community/community_screen.dart';
 import 'my_scene_screen.dart';
 import 'mypage/mypage_screen.dart';
 
+// ✅ 추가: 전역 접근을 위해 글로벌 키 선언
+final GlobalKey<_MainLayoutState> mainLayoutKey = GlobalKey<_MainLayoutState>();
+
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
@@ -30,6 +33,12 @@ class _MainLayoutState extends State<MainLayout> {
     }
   }
 
+  /// ✅ 하단바 탭 전환 (외부에서 접근 가능하도록 public 메서드로)
+  void changeTab(int index) {
+    if (index < 0 || index > 4) return;
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = [
@@ -41,6 +50,7 @@ class _MainLayoutState extends State<MainLayout> {
     ];
 
     return Scaffold(
+      key: mainLayoutKey,
       backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _selectedIndex,

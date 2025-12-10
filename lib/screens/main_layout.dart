@@ -8,7 +8,7 @@ import 'home/home_screen.dart';
 import 'post_screen.dart';
 import 'community/community_screen.dart';
 import 'my_scene_screen.dart';
-import 'mypage_screen.dart';
+import 'mypage/mypage_screen.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});

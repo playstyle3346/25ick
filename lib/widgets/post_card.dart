@@ -44,7 +44,7 @@ class _PostCardState extends State<PostCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ===========================
-            // 유저 정보
+            // 유저 정보 + 팔로우 버튼
             // ===========================
             Row(
               children: [
@@ -53,22 +53,39 @@ class _PostCardState extends State<PostCard> {
                   radius: 18,
                 ),
                 const SizedBox(width: 10),
-                Text(post.username,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(post.username,
+                        style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold)),
+                    const Text("3분 전", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
                 const Spacer(),
 
-                /// 팔로우 버튼
+                /// ✨ 팔로우 버튼 (토글 기능 & 디자인)
                 GestureDetector(
                   onTap: () {
                     appState.toggleFollow(post);
-                    setState(() {});
+                    // PostScreen은 AppState 리스너를 통해 자동 갱신됨
                   },
-                  child: Text(
-                    post.isFollowed ? "언팔로우" : "팔로우",
-                    style:
-                    const TextStyle(color: AppColors.primary, fontSize: 13),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      // 팔로우 상태면 회색, 아니면 주황색
+                      color: post.isFollowed ? Colors.grey[800] : AppColors.primary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      post.isFollowed ? "언팔로우" : "팔로우",
+                      style: TextStyle(
+                        color: post.isFollowed ? Colors.white : Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 )
               ],
@@ -115,7 +132,7 @@ class _PostCardState extends State<PostCard> {
                   ),
                   onPressed: () {
                     appState.toggleLike(post);
-                    setState(() {});
+                    // PostScreen은 AppState 리스너를 통해 자동 갱신되어 인기순 정렬됨
                   },
                 ),
                 Text("${post.likes}",
@@ -133,11 +150,17 @@ class _PostCardState extends State<PostCard> {
                   ),
                   onPressed: () {
                     appState.toggleDislike(post);
-                    setState(() {});
                   },
                 ),
                 Text("${post.dislikes}",
                     style: const TextStyle(color: Colors.grey)),
+
+                const SizedBox(width: 16),
+
+                /// 댓글 아이콘
+                const Icon(Icons.chat_bubble_outline, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text("${post.comments.length}", style: const TextStyle(color: Colors.grey)),
               ],
             )
           ],

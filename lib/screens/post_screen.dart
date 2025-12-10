@@ -19,18 +19,40 @@ class _PostScreenState extends State<PostScreen>
   void initState() {
     super.initState();
     _tab = TabController(length: 3, vsync: this);
+
+    // ✨ AppState가 변경되면(좋아요/팔로우 등) 화면을 다시 그려서 정렬/필터링 갱신
+    AppState().addListener(_onAppStateChanged);
   }
 
+  @override
+  void dispose() {
+    AppState().removeListener(_onAppStateChanged);
+    _tab.dispose();
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  // ✨ 정렬 및 필터링 로직
   List _filterPosts(int index) {
-    final posts = AppState().posts;
+    // 원본 리스트 복사 (sort는 원본을 바꾸므로 복사본 사용 필수)
+    final posts = List.from(AppState().posts);
 
     if (index == 0) {
+      // 최신순 (생성일 내림차순)
       return posts..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     }
     if (index == 1) {
-      return posts..sort((a, b) => b.likes.compareTo(a.likes));
+      // 인기순 (좋아요 내림차순, 같으면 최신순)
+      return posts..sort((a, b) {
+        int compare = b.likes.compareTo(a.likes);
+        return compare == 0 ? b.createdAt.compareTo(a.createdAt) : compare;
+      });
     }
     if (index == 2) {
+      // 팔로우 (내가 팔로우한 사람의 글만)
       return posts.where((p) => p.isFollowed).toList();
     }
     return posts;
@@ -41,6 +63,8 @@ class _PostScreenState extends State<PostScreen>
         context, MaterialPageRoute(builder: (_) => const PostWriteScreen()));
 
     if (newPost != null) {
+      // AppState에 추가 로직이 있다면 거기서 처리됨.
+      // 여기서는 화면 갱신만
       setState(() {});
     }
   }
@@ -56,8 +80,10 @@ class _PostScreenState extends State<PostScreen>
                 color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tab,
+          indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: Colors.grey,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
             Tab(text: "최신순"),
             Tab(text: "인기순"),

@@ -1,6 +1,10 @@
 import '../models/models.dart';
 
 class DummyRepository {
+  // ✨ [필수 추가] 내 정보 (댓글 작성 시 사용)
+  static const String myName = "Jäger";
+  static const String myProfileImage = "assets/posters/insideout.jpg";
+
   // -------------------------------
   // Placeholder 이미지
   // -------------------------------
@@ -55,6 +59,8 @@ class DummyRepository {
 
       likes: 0,
       dislikes: 0,
+
+      // ✨ [수정] Comment 객체 리스트로 초기화 (에러 방지)
       comments: [],
 
       createdAt: DateTime.now().subtract(Duration(hours: index * 5)),

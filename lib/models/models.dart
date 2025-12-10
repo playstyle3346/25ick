@@ -1,4 +1,19 @@
 // =============================
+// ✨ Comment Model (신규 추가)
+// =============================
+class Comment {
+  final String username;   // 작성자 이름
+  final String text;       // 댓글 내용
+  final String? avatarUrl; // 프로필 사진 (선택)
+
+  Comment({
+    required this.username,
+    required this.text,
+    this.avatarUrl,
+  });
+}
+
+// =============================
 // Post Model
 // =============================
 class Post {
@@ -15,8 +30,8 @@ class Post {
   int dislikes;
   bool isDisliked;
 
-  // 댓글
-  List<String> comments;
+  // ✨ [수정] 댓글을 객체(Comment) 리스트로 관리
+  List<Comment> comments;
 
   // 정렬/필터링용
   final DateTime createdAt;
@@ -32,14 +47,14 @@ class Post {
     this.isLiked = false,
     this.dislikes = 0,
     this.isDisliked = false,
-    List<String>? comments,
+    List<Comment>? comments, // 생성자 타입 변경
     DateTime? createdAt,
     this.isFollowed = false,
   })  : comments = comments ?? [],
         createdAt = createdAt ?? DateTime.now();
 
   // ---------------------
-  // ✨ 유틸 메서드
+  // 유틸 메서드
   // ---------------------
 
   /// 좋아요 toggle
@@ -50,7 +65,6 @@ class Post {
     } else {
       isLiked = true;
       likes++;
-
       if (isDisliked) {
         isDisliked = false;
         dislikes--;
@@ -66,7 +80,6 @@ class Post {
     } else {
       isDisliked = true;
       dislikes++;
-
       if (isLiked) {
         isLiked = false;
         likes--;
@@ -74,9 +87,9 @@ class Post {
     }
   }
 
-  /// 댓글 추가
-  void addComment(String text) {
-    comments.add(text);
+  /// ✨ [수정] 댓글 추가 (Comment 객체를 받음)
+  void addComment(Comment comment) {
+    comments.add(comment);
   }
 
   /// 댓글 삭제
@@ -89,8 +102,6 @@ class Post {
     isFollowed = !isFollowed;
   }
 }
-
-
 
 // =============================
 // Quote Model
@@ -106,8 +117,6 @@ class Quote {
     required this.imageUrl,
   });
 }
-
-
 
 // =============================
 // Scene Models
@@ -126,8 +135,6 @@ class SceneGroup {
     required this.scenes,
   });
 }
-
-
 
 // =============================
 // Emotion Note Model

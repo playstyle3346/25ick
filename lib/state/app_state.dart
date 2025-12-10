@@ -3,6 +3,7 @@ import '../models/models.dart';
 import '../data/dummy_repository.dart';
 
 class AppState extends ChangeNotifier {
+  // 싱글톤 패턴 (앱 전체에서 하나의 데이터만 공유하기 위함)
   static final AppState _instance = AppState._internal();
   factory AppState() => _instance;
   AppState._internal();
@@ -10,18 +11,11 @@ class AppState extends ChangeNotifier {
   /// 전체 포스트 저장
   List<Post> posts = [];
 
-  /// 내가 작성한 댓글
-  List<String> myComments = [];
-
-  /// 팔로우 목록
-  List<String> following = [];
-
-  /// 현재 유저
-  String currentUser = "나 (Me)";
-
-  /// 초기 세팅 (앱 실행 시 1회만 호출)
+  /// 초기 세팅 (앱 실행 시 데이터를 DummyRepository에서 가져옴)
   void initialize() {
-    posts = List.from(DummyRepository.posts); // ← static 접근으로 변경
+    if (posts.isEmpty) {
+      posts = List.from(DummyRepository.posts);
+    }
     notifyListeners();
   }
 
@@ -30,21 +24,26 @@ class AppState extends ChangeNotifier {
   // ============================================================
   void addPost(Post post) {
     posts.insert(0, post);
-    notifyListeners();
+    notifyListeners(); // 화면 갱신 알림
   }
 
   // ============================================================
-  // 댓글 추가 / 삭제
+  // 댓글 추가 / 삭제 (✨ 수정됨)
   // ============================================================
   void addComment(Post post, String text) {
-    post.comments.add(text);
-    myComments.add(text);
+    // ✨ 단순 글자가 아니라 Comment 객체를 생성해서 추가
+    final newComment = Comment(
+      username: DummyRepository.myName,       // "Jäger"
+      text: text,
+      avatarUrl: DummyRepository.myProfileImage, // 내 프사
+    );
+
+    post.comments.add(newComment);
     notifyListeners();
   }
 
   void removeComment(Post post, int index) {
     if (index < 0 || index >= post.comments.length) return;
-    myComments.remove(post.comments[index]);
     post.comments.removeAt(index);
     notifyListeners();
   }
@@ -59,6 +58,7 @@ class AppState extends ChangeNotifier {
     } else {
       post.likes++;
       post.isLiked = true;
+      // 좋아요 누르면 싫어요는 취소
       if (post.isDisliked) {
         post.dislikes--;
         post.isDisliked = false;
@@ -74,6 +74,7 @@ class AppState extends ChangeNotifier {
     } else {
       post.dislikes++;
       post.isDisliked = true;
+      // 싫어요 누르면 좋아요는 취소
       if (post.isLiked) {
         post.likes--;
         post.isLiked = false;
@@ -91,11 +92,21 @@ class AppState extends ChangeNotifier {
   }
 
   // ============================================================
-  // 마이페이지 카운트
+  // 마이페이지 통계 계산 (✨ 실시간 계산으로 변경)
   // ============================================================
-  int get myPostCount => posts.where((p) => p.username == currentUser).length;
 
-  int get myCommentCount => myComments.length;
+  // 1. 내가 쓴 포스트 개수
+  int get myPostCount => posts.where((p) => p.username == DummyRepository.myName).length;
 
-  int get myFollowerCount => following.length;
+  // 2. 내가 쓴 댓글 개수 (모든 포스트를 뒤져서 내 이름으로 된 댓글 카운트)
+  int get myCommentCount {
+    int count = 0;
+    for (var post in posts) {
+      count += post.comments.where((c) => c.username == DummyRepository.myName).length;
+    }
+    return count;
+  }
+
+  // 3. 팔로우 수 (내가 팔로우한 사람 수)
+  int get myFollowerCount => posts.where((p) => p.isFollowed).length;
 }

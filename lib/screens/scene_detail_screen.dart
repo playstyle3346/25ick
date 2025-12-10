@@ -1,34 +1,49 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
+import '../models/models.dart';
+import '../theme/app_colors.dart';
 
 class SceneDetailScreen extends StatelessWidget {
-  final String imageUrl;
-  const SceneDetailScreen({super.key, required this.imageUrl});
+  final SceneItem scene;
 
-  ImageProvider _getImageProvider(String path) {
-    if (path.startsWith('assets/')) return AssetImage(path);
-    return FileImage(File(path));
+  const SceneDetailScreen({
+    super.key,
+    required this.scene,
+  });
+
+  ImageProvider _buildImage() {
+    if (scene.imageBytes != null) {
+      return MemoryImage(scene.imageBytes!);
+    }
+    if (scene.imageUrl != null && scene.imageUrl!.isNotEmpty) {
+      return AssetImage(scene.imageUrl!);
+    }
+    return const AssetImage('assets/placeholder.png');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        elevation: 0,
-      ),
-      body: Center(
-        child: InteractiveViewer(
-          panEnabled: true,
-          minScale: 0.5,
-          maxScale: 4.0,
-          child: Image(
-            image: _getImageProvider(imageUrl),
-            fit: BoxFit.contain,
-          ),
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: Image(
+                  image: _buildImage(),
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
         ),
       ),
     );

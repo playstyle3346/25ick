@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
-// ✨ [필수] DummyRepository가 있는 경로를 import 해주세요.
-// 예: import '../../data/dummy_repository.dart';
 import '../../../data/dummy_repository.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -15,39 +13,109 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController _commentController = TextEditingController();
+  late List<Map<String, String>> comments;
 
-  // ✨ [수정] 댓글 데이터 리스트 (이미지 경로 추가)
-  // 기존 데이터에도 임시 이미지를 넣어두면 보기가 좋습니다.
-  List<Map<String, String>> comments = [
-    {
-      "user": "익명1",
-      "content": "오 저도 궁금했는데 정보 감사합니다!",
-      "image": "assets/posters/getout.jpg" // 예시 이미지
-    },
-    {
-      "user": "익명2",
-      "content": "완전 공감합니다 ㅋㅋ",
-      "image": "assets/posters/whiplash.jpg" // 예시 이미지
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+
+    // ⭐ 새 글인지 기존 글인지 구분
+    if (widget.post["isNew"] == "true") {
+      comments = [];
+    } else {
+      comments = [
+        {
+          "user": "익명1",
+          "content": "오 저도 궁금했는데 정보 감사합니다!",
+          "image": "assets/posters/getout.jpg"
+        },
+        {
+          "user": "익명2",
+          "content": "완전 공감합니다 ㅋㅋ",
+          "image": "assets/posters/whiplash.jpg"
+        },
+      ];
+    }
+  }
 
   void _addComment() {
     if (_commentController.text.trim().isEmpty) return;
 
     setState(() {
       comments.add({
-        // ✨ [수정] 고정값 "나" -> DummyRepository 변수 사용
         "user": DummyRepository.myName,
-
         "content": _commentController.text,
-
-        // ✨ [추가] 내 프로필 이미지 추가
         "image": DummyRepository.myProfileImage,
       });
       _commentController.clear();
     });
-
     FocusScope.of(context).unfocus();
+  }
+
+  // 🗑 댓글 삭제
+  void _deleteComment(int index) {
+    setState(() => comments.removeAt(index));
+  }
+
+  Future<void> _confirmDeleteComment(int index) async {
+    final comment = comments[index];
+    if (comment["user"] != DummyRepository.myName) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('댓글 삭제', style: TextStyle(color: AppColors.textPrimary)),
+        content: const Text('이 댓글을 삭제하시겠습니까?',
+            style: TextStyle(color: AppColors.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) _deleteComment(index);
+  }
+
+  // 🗑 게시물 삭제
+  Future<void> _confirmDeletePost() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('게시물 삭제', style: TextStyle(color: AppColors.textPrimary)),
+        content: const Text('이 게시물을 삭제하시겠습니까?',
+            style: TextStyle(color: AppColors.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      Navigator.pop(context); // 이전 화면으로 이동
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("게시물이 삭제되었습니다."),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -72,6 +140,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           style: const TextStyle(color: AppColors.textPrimary),
           overflow: TextOverflow.ellipsis,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
+            onPressed: _confirmDeletePost,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -81,129 +155,125 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- 게시글 영역 ---
+                  // --- 게시글 상단 ---
                   Row(
                     children: [
-                      // 게시글 작성자 프로필 (게시글 데이터에 이미지가 없다면 기본 아이콘)
                       const CircleAvatar(
                         radius: 20,
-                        backgroundColor: Colors.grey,
-                        backgroundImage: AssetImage("assets/posters/lalaland.jpg"), // 게시글 작성자용 임시 이미지
+                        backgroundImage:
+                        AssetImage("assets/posters/lalaland.jpg"),
                       ),
                       const SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            widget.post['user'] ?? "Unknown",
-                            style: const TextStyle(
-                                color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            widget.post['time'] ?? "",
-                            style: const TextStyle(
-                                color: AppColors.textSecondary, fontSize: 12),
-                          ),
+                          Text(widget.post['user'] ?? "Unknown",
+                              style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.bold)),
+                          Text(widget.post['time'] ?? "",
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary, fontSize: 12)),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    widget.post['title']!,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    widget.post['content']!,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 16,
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
 
+                  const SizedBox(height: 20),
+
+                  Text(widget.post['title']!,
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold)),
+
+                  const SizedBox(height: 20),
+
+                  Text(widget.post['content']!,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 16,
+                          height: 1.6)),
+
+                  const SizedBox(height: 40),
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 20),
 
-                  // --- 댓글 리스트 영역 ---
-                  Text(
-                    "댓글 ${comments.length}",
-                    style: const TextStyle(
-                        color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                  ),
+                  // --- 댓글 ---
+                  Text("댓글 ${comments.length}",
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
 
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: comments.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final comment = comments[index];
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ✨ [수정] 댓글 작성자 프로필 이미지
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.grey,
-                            // 이미지가 있으면 Asset 이미지 로드, 없으면 null
-                            backgroundImage: comment['image'] != null
-                                ? AssetImage(comment['image']!)
-                                : null,
-                            // 이미지가 없을 때만 아이콘 표시
-                            child: comment['image'] == null
-                                ? const Icon(Icons.person, size: 20, color: Colors.white)
-                                : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  comment['user']!,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  comment['content']!,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                  if (comments.isEmpty)
+                    const Text("첫 댓글을 남겨보세요!",
+                        style: TextStyle(color: Colors.grey))
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: comments.length,
+                      separatorBuilder: (context, index) =>
+                      const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final c = comments[index];
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundImage: AssetImage(c["image"]!),
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(c["user"]!,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13)),
+                                      if (c["user"] ==
+                                          DummyRepository.myName)
+                                        GestureDetector(
+                                          onTap: () =>
+                                              _confirmDeleteComment(index),
+                                          child: const Icon(
+                                            Icons.more_horiz,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(c["content"]!,
+                                      style: const TextStyle(
+                                          color: Colors.white70, fontSize: 14)),
+                                ],
+                              ),
+                            )
+                          ],
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
           ),
 
-          // 하단: 댓글 입력창
+          // --- 댓글 입력창 ---
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: AppColors.card,
-              border: Border(
-                top: BorderSide(color: Colors.white10),
-              ),
+              border: Border(top: BorderSide(color: Colors.white10)),
             ),
             child: SafeArea(
               child: Row(
@@ -232,10 +302,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
                         color: AppColors.primary,
+                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.send, color: Colors.black, size: 20),
+                      child:
+                      const Icon(Icons.send, size: 20, color: Colors.black),
                     ),
                   ),
                 ],

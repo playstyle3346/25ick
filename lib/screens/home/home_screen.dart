@@ -66,12 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
           "안녕하세요, $nickname",
           style: const TextStyle(fontSize: 20, color: AppColors.textPrimary),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.search, color: AppColors.textPrimary),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

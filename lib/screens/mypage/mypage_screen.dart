@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../theme/app_colors.dart';
 import 'settings_screen.dart';
 import '../../services/auth_service.dart';
@@ -20,8 +21,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
   final AuthService _auth = AuthService();
   Map<String, dynamic>? userData;
 
-  // 📸 날짜별 이미지 저장용
-  final Map<String, File> _dateImages = {};
+  // 날짜별 이미지 저장
+  final Map<String, Uint8List> _dateImages = {};
 
   @override
   void initState() {
@@ -53,17 +54,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title:
-        const Text('마이페이지', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('마이페이지', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SettingsScreen()),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => SettingsScreen()));
               },
               child: const Icon(Icons.settings, color: AppColors.textPrimary),
             ),
@@ -71,9 +69,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
         ],
       ),
       body: userData == null
-          ? const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      )
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _buildMainContent(appState),
     );
   }
@@ -88,7 +84,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 프로필
+          // 프로필
           Row(
             children: [
               Container(
@@ -127,41 +123,57 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
           const SizedBox(height: 24),
 
-          // 🔹 통계 박스
+          // 통계 박스
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _statBox("내가 쓴 포스트", postCount.toString(), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyPostsScreen()),
-                );
+              _statBox("내가 쓴 포스트", () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const MyPostsScreen()));
               }),
-              _statBox("작성한 댓글", commentCount.toString(), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyCommentsScreen()),
-                );
+              _statBox("작성한 댓글", () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const MyCommentsScreen()));
               }),
-              _statBox("팔로워", followerCount.toString(), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyFollowersScreen()),
-                );
+              _statBox("팔로워", () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const MyFollowersScreen()));
               }),
             ],
           ),
 
           const SizedBox(height: 30),
 
-          // 🔹 캘린더
+          // 캘린더
           _buildCalendar(),
         ],
       ),
     );
   }
 
-  // ✅ 캘린더 (날짜 클릭 시 사진 추가)
+  // 사진 확대 보기
+  void _showFullImage(Uint8List bytes) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          body: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.memory(bytes),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 캘린더 UI
   Widget _buildCalendar() {
     int currentYear = DateTime.now().year;
     int currentMonth = DateTime.now().month;
@@ -187,9 +199,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🔸 년/월 선택
+              // 년/월 선택
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -197,8 +208,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     value: currentYear,
                     dropdownColor: AppColors.card,
                     iconEnabledColor: AppColors.textPrimary,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    underline: const SizedBox(),
                     items: years
                         .map((y) =>
                         DropdownMenuItem(value: y, child: Text("$y년")))
@@ -211,8 +220,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     value: currentMonth,
                     dropdownColor: AppColors.card,
                     iconEnabledColor: AppColors.textPrimary,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    underline: const SizedBox(),
                     items: months
                         .map((m) =>
                         DropdownMenuItem(value: m, child: Text("$m월")))
@@ -226,7 +233,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
               const SizedBox(height: 10),
 
-              // 🔸 요일 헤더
+              // 요일
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
@@ -242,7 +249,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
               const SizedBox(height: 8),
 
-              // 🔸 날짜 및 이미지 표시
+              // 날짜 + 이미지 + 삭제 버튼
               GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
@@ -250,7 +257,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   crossAxisCount: 7,
                   crossAxisSpacing: 4,
                   mainAxisSpacing: 4,
-                  childAspectRatio: 1,
                 ),
                 itemCount: calendarDays.length,
                 itemBuilder: (context, index) {
@@ -258,71 +264,73 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   if (day == null) return const SizedBox.shrink();
 
                   final dateKey = "$currentYear-$currentMonth-$day";
-                  final imageFile = _dateImages[dateKey];
+                  final bytes = _dateImages[dateKey];
 
                   return GestureDetector(
                     onTap: () async {
-                      if (imageFile != null) {
-                        // 🗑️ 삭제 다이얼로그
-                        final shouldDelete = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: AppColors.card,
-                            title: const Text("사진 삭제",
-                                style: TextStyle(color: AppColors.textPrimary)),
-                            content: const Text("사진을 삭제하시겠습니까?",
-                                style: TextStyle(color: AppColors.textSecondary)),
-                            actions: [
-                              TextButton(
-                                child: const Text("아니오",
-                                    style: TextStyle(color: Colors.grey)),
-                                onPressed: () => Navigator.pop(context, false),
-                              ),
-                              TextButton(
-                                child: const Text("예",
-                                    style: TextStyle(color: Colors.redAccent)),
-                                onPressed: () => Navigator.pop(context, true),
-                              ),
-                            ],
-                          ),
-                        );
+                      if (bytes != null) {
+                        _showFullImage(bytes);
+                        return;
+                      }
 
-                        if (shouldDelete == true) {
-                          setState(() {
-                            _dateImages.remove(dateKey);
-                          });
-                        }
-                      } else {
-                        // 📸 새 이미지 추가
-                        final picker = ImagePicker();
-                        final picked = await picker.pickImage(
-                            source: ImageSource.gallery);
-                        if (picked != null) {
-                          setState(() {
-                            _dateImages[dateKey] = File(picked.path);
-                          });
-                        }
+                      final picker = ImagePicker();
+                      final picked =
+                      await picker.pickImage(source: ImageSource.gallery);
+                      if (picked != null) {
+                        final uploadedBytes = await picked.readAsBytes();
+                        setState(() => _dateImages[dateKey] = uploadedBytes);
                       }
                     },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[850],
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: imageFile != null
-                          ? ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.file(imageFile,
-                            fit: BoxFit.cover, width: double.infinity),
-                      )
-                          : Center(
-                        child: Text(
-                          "$day",
-                          style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12),
+                    child: Stack(
+                      children: [
+                        // 기본 셀
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[850],
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: bytes != null
+                              ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.memory(
+                              bytes,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          )
+                              : Center(
+                            child: Text(
+                              "$day",
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+
+                        // 삭제 버튼
+                        if (bytes != null)
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() => _dateImages.remove(dateKey));
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close,
+                                    size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   );
                 },
@@ -334,8 +342,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // ✅ 통계 박스 (클릭 가능)
-  Widget _statBox(String title, String count, VoidCallback onTap) {
+  // 통계 박스 (숫자 제거됨)
+  Widget _statBox(String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -345,25 +353,16 @@ class _MyPageScreenState extends State<MyPageScreen> {
           color: AppColors.card,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Column(
-          children: [
-            Text(
-              count,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+        child: Center(
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

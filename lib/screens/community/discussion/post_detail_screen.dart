@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
+// ✨ [필수] DummyRepository가 있는 경로를 import 해주세요.
+// 예: import '../../data/dummy_repository.dart';
+import '../../../data/dummy_repository.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Map<String, String> post;
@@ -13,10 +16,19 @@ class PostDetailScreen extends StatefulWidget {
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController _commentController = TextEditingController();
 
-  // 댓글 데이터 리스트 (초기 더미 데이터)
+  // ✨ [수정] 댓글 데이터 리스트 (이미지 경로 추가)
+  // 기존 데이터에도 임시 이미지를 넣어두면 보기가 좋습니다.
   List<Map<String, String>> comments = [
-    {"user": "익명1", "content": "오 저도 궁금했는데 정보 감사합니다!"},
-    {"user": "익명2", "content": "완전 공감합니다 ㅋㅋ"},
+    {
+      "user": "익명1",
+      "content": "오 저도 궁금했는데 정보 감사합니다!",
+      "image": "assets/posters/getout.jpg" // 예시 이미지
+    },
+    {
+      "user": "익명2",
+      "content": "완전 공감합니다 ㅋㅋ",
+      "image": "assets/posters/whiplash.jpg" // 예시 이미지
+    },
   ];
 
   void _addComment() {
@@ -24,13 +36,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     setState(() {
       comments.add({
-        "user": "나", // 내 닉네임
+        // ✨ [수정] 고정값 "나" -> DummyRepository 변수 사용
+        "user": DummyRepository.myName,
+
         "content": _commentController.text,
+
+        // ✨ [추가] 내 프로필 이미지 추가
+        "image": DummyRepository.myProfileImage,
       });
-      _commentController.clear(); // 입력창 비우기
+      _commentController.clear();
     });
 
-    // 키보드 내리기
     FocusScope.of(context).unfocus();
   }
 
@@ -59,7 +75,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
       body: Column(
         children: [
-          // 상단: 게시글 내용 + 댓글 리스트 (스크롤 가능 영역)
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -67,9 +82,31 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // --- 게시글 영역 ---
-                  Text(
-                    "${widget.post['user']} · ${widget.post['time']}",
-                    style: const TextStyle(color: AppColors.textSecondary),
+                  Row(
+                    children: [
+                      // 게시글 작성자 프로필 (게시글 데이터에 이미지가 없다면 기본 아이콘)
+                      const CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey,
+                        backgroundImage: AssetImage("assets/posters/lalaland.jpg"), // 게시글 작성자용 임시 이미지
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.post['user'] ?? "Unknown",
+                            style: const TextStyle(
+                                color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            widget.post['time'] ?? "",
+                            style: const TextStyle(
+                                color: AppColors.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -91,7 +128,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // --- 구분선 ---
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 20),
 
@@ -103,10 +139,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 댓글 목록 렌더링
                   ListView.separated(
-                    shrinkWrap: true, // ScrollView 안에서 리스트뷰 사용 시 필수
-                    physics: const NeverScrollableScrollPhysics(), // 바깥 스크롤과 충돌 방지
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: comments.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
@@ -114,14 +149,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 댓글 프로필
-                          const CircleAvatar(
+                          // ✨ [수정] 댓글 작성자 프로필 이미지
+                          CircleAvatar(
                             radius: 16,
                             backgroundColor: Colors.grey,
-                            child: Icon(Icons.person, size: 20, color: Colors.white),
+                            // 이미지가 있으면 Asset 이미지 로드, 없으면 null
+                            backgroundImage: comment['image'] != null
+                                ? AssetImage(comment['image']!)
+                                : null,
+                            // 이미지가 없을 때만 아이콘 표시
+                            child: comment['image'] == null
+                                ? const Icon(Icons.person, size: 20, color: Colors.white)
+                                : null,
                           ),
                           const SizedBox(width: 12),
-                          // 댓글 내용
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,7 +190,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       );
                     },
                   ),
-                  // 하단 여백 확보 (입력창에 가려지지 않게)
                   const SizedBox(height: 20),
                 ],
               ),
@@ -160,7 +200,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
-              color: AppColors.card, // 혹은 배경색보다 조금 밝은 색
+              color: AppColors.card,
               border: Border(
                 top: BorderSide(color: Colors.white10),
               ),
@@ -187,7 +227,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // 전송 버튼
                   GestureDetector(
                     onTap: _addComment,
                     child: Container(

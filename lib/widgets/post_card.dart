@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../models/models.dart';
 import '../screens/post_detail_screen.dart';
 import '../data/dummy_repository.dart';
+import '../state/app_state.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -84,7 +85,14 @@ class _PostCardState extends State<PostCard> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
-    final isMyPost = post.username == DummyRepository.myName;
+
+    // 🔥 로그인한 닉네임 적용
+    final currentUser = AppState().userNickname;
+    final displayName = (post.username == "Guest" || post.username.isEmpty)
+        ? currentUser
+        : post.username;
+
+    final isMyPost = displayName == currentUser;
 
     return GestureDetector(
       onTap: () async {
@@ -123,7 +131,7 @@ class _PostCardState extends State<PostCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(post.username,
+                      Text(displayName,
                           style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontWeight: FontWeight.bold)),
@@ -231,8 +239,9 @@ class _PostCardState extends State<PostCard> {
                     post.isDisliked
                         ? Icons.thumb_down
                         : Icons.thumb_down_outlined,
-                    color:
-                    post.isDisliked ? AppColors.primary : Colors.grey,
+                    color: post.isDisliked
+                        ? AppColors.primary
+                        : Colors.grey,
                   ),
                   onPressed: () {
                     setState(() => post.toggleDislike());

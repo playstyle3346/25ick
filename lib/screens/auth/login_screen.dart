@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../main_layout.dart';
 import 'signup_screen.dart';
+import '../../data/dummy_repository.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,24 +31,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // 🔥 FastAPI 로그인 요청
-    final error = await _authService.login(email, password);
+    // 로그인 요청 → user 객체 반환하도록 수정 필요
+    final user = await _authService.login(email, password);
 
     setState(() => _isLoading = false);
 
-    if (error == null) {
-      // 로그인 성공 → 메인 화면 이동
+    if (user != null) {
+      // 🔥 로그인한 유저 이름/프로필 저장
+      DummyRepository.setLoggedInUser(
+        user.nickname,
+        user.profileImage ?? "",
+      );
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainLayout()),
       );
     } else {
-      // 🔥 로그인 실패 → 에러 메시지 표시
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
+        const SnackBar(content: Text("로그인 실패")),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

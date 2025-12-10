@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../theme/app_colors.dart';
 import 'post_detail_screen.dart';
 import 'write_post_screen.dart';
@@ -17,7 +18,6 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
       "time": "방금 전",
       "title": "안녕",
       "content": "안녕하세요",
-      // 기존 글 → isNew 없음
     },
     {
       "user": "유니",
@@ -39,11 +39,15 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
     },
   ];
 
+  Future<String> _getNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("nickname") ?? "익명";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -51,10 +55,7 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "굿즈/잡담",
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
+        title: const Text("굿즈/잡담", style: TextStyle(color: AppColors.textPrimary)),
       ),
 
       floatingActionButton: FloatingActionButton(
@@ -67,12 +68,8 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
           );
 
           if (newPost != null) {
-            // ⭐ 새 글에는 isNew 플래그를 반드시 넣어준다
             newPost["isNew"] = "true";
-
-            setState(() {
-              posts.insert(0, newPost);
-            });
+            setState(() => posts.insert(0, newPost));
           }
         },
       ),
@@ -92,7 +89,6 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
                 ),
               );
             },
-
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),

@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../data/dummy_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class AppState extends ChangeNotifier {
   static final AppState _instance = AppState._internal();
   factory AppState() => _instance;
   AppState._internal();
 
+  /// ------------------------------
+  /// 🔥 로그인한 사용자 정보 저장 (추가된 부분)
+  /// ------------------------------
+  String userNickname = DummyRepository.myName.isNotEmpty
+      ? DummyRepository.myName
+      : "Guest";
+
+  String userAvatar = DummyRepository.myProfileImage;
+
+  void setUser(String nickname, String avatarPath) {
+    userNickname = nickname;
+    userAvatar = avatarPath;
+    notifyListeners();
+  }
+
   /// 전체 포스트 저장
   List<Post> posts = [];
 
-  /// 초기 세팅 (앱 실행 시 DummyRepository 로드)
   void initialize() {
     if (posts.isEmpty) {
       posts = List.from(DummyRepository.posts);
@@ -26,18 +42,20 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ================================
-  // 댓글 추가 / 삭제 (✨ avatarUrl 안정화)
-  // ================================
-  void addComment(Post post, String text) {
-    final avatar = DummyRepository.myProfileImage.isNotEmpty
-        ? DummyRepository.myProfileImage
-        : 'assets/posters/insideout.jpg'; // ✅ fallback
+// ================================
+// 댓글 추가 / 삭제
+// ================================
+  Future<String> _getCurrentNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("nickname") ?? "익명";
+  }
+
+  void addComment(Post post, String text) async {
+    final nickname = await _getCurrentNickname();
+    final avatar = DummyRepository.myProfileImage;
 
     final newComment = Comment(
-      username: DummyRepository.myName.isNotEmpty
-          ? DummyRepository.myName
-          : "익명",
+      username: nickname,
       text: text,
       avatarUrl: avatar,
     );
@@ -51,6 +69,7 @@ class AppState extends ChangeNotifier {
     post.comments.removeAt(index);
     notifyListeners();
   }
+
 
   // ================================
   // 좋아요 / 싫어요
@@ -86,7 +105,7 @@ class AppState extends ChangeNotifier {
   }
 
   // ================================
-  // 팔로우 / 언팔로우
+  // 팔로우
   // ================================
   void toggleFollow(Post post) {
     post.isFollowed = !post.isFollowed;
@@ -97,14 +116,12 @@ class AppState extends ChangeNotifier {
   // 마이페이지 통계
   // ================================
   int get myPostCount =>
-      posts.where((p) => p.username == DummyRepository.myName).length;
+      posts.where((p) => p.username == userNickname).length;
 
   int get myCommentCount {
     int count = 0;
     for (var post in posts) {
-      count += post.comments
-          .where((c) => c.username == DummyRepository.myName)
-          .length;
+      count += post.comments.where((c) => c.username == userNickname).length;
     }
     return count;
   }

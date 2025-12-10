@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../theme/app_colors.dart';
 
 class WritePostScreen extends StatefulWidget {
@@ -9,6 +10,11 @@ class WritePostScreen extends StatefulWidget {
 class _WritePostScreenState extends State<WritePostScreen> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController contentController = TextEditingController();
+
+  Future<String> _getNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("nickname") ?? "익명";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +78,8 @@ class _WritePostScreenState extends State<WritePostScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                 ),
-                onPressed: () {
+                onPressed: () async {
                   if (titleController.text.trim().isEmpty ||
                       contentController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -85,8 +88,10 @@ class _WritePostScreenState extends State<WritePostScreen> {
                     return;
                   }
 
+                  final nickname = await _getNickname();
+
                   Navigator.pop(context, {
-                    "user": "익명",
+                    "user": nickname,
                     "time": "방금 전",
                     "title": titleController.text,
                     "content": contentController.text,

@@ -16,7 +16,7 @@ class _PostWriteScreenState extends State<PostWriteScreen> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
 
-  Uint8List? _imageBytes;   // 웹용 이미지
+  Uint8List? _imageBytes;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -38,16 +38,19 @@ class _PostWriteScreenState extends State<PostWriteScreen> {
       return;
     }
 
+    // 🔥 로그인한 유저 정보 사용
+    final nickname = DummyRepository.myName.isEmpty
+        ? "익명"
+        : DummyRepository.myName;
+
+    final avatar = DummyRepository.myProfileImage;
+
     final post = Post(
-      username: DummyRepository.myName.isEmpty
-          ? "익명"
-          : DummyRepository.myName,
-      userAvatarUrl: DummyRepository.myProfileImage,
+      username: nickname,
+      userAvatarUrl: avatar,
       title: _titleController.text,
       content: _contentController.text,
-
-      imageBytes: _imageBytes,   // 🔥 핵심
-
+      imageBytes: _imageBytes,
       likes: 0,
       dislikes: 0,
       comments: [],
@@ -86,15 +89,17 @@ class _PostWriteScreenState extends State<PostWriteScreen> {
             TextField(
               controller: _titleController,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: const InputDecoration(
                 hintText: "제목",
                 hintStyle: TextStyle(color: Colors.white38),
                 border: InputBorder.none,
               ),
             ),
+
             const Divider(color: Colors.white24),
 
             TextField(
@@ -134,7 +139,8 @@ class _PostWriteScreenState extends State<PostWriteScreen> {
                     Icon(Icons.add_photo_alternate_outlined,
                         color: Colors.white38, size: 40),
                     SizedBox(height: 8),
-                    Text("사진 추가", style: TextStyle(color: Colors.white38)),
+                    Text("사진 추가",
+                        style: TextStyle(color: Colors.white38)),
                   ],
                 ),
               ),

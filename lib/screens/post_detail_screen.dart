@@ -45,10 +45,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         );
       }
     });
+
+    setState(() {});
   }
 
   void _deleteComment(int index) {
     AppState().removeComment(widget.post, index);
+    setState(() {});
   }
 
   @override
@@ -59,10 +62,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: Text(
-          "${post.username}님의 포스트",
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-        ),
+        title: Text("${post.username}님의 포스트",
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16)),
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
         elevation: 0,
       ),
@@ -78,7 +79,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   _buildHeader(post),
                   const SizedBox(height: 16),
 
-                  // ✅ 제목
+                  /// 제목
                   Text(
                     post.title,
                     style: const TextStyle(
@@ -87,10 +88,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 16),
 
-                  // ✅ 본문 내용 추가 (누락되었던 부분)
-                  if (post.content.isNotEmpty) ...[
+                  /// 본문
+                  if (post.content.isNotEmpty)
                     Text(
                       post.content,
                       style: const TextStyle(
@@ -99,23 +101,35 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         height: 1.6,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
 
-                  // ✅ 이미지 (있을 경우만)
-                  if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
+                  const SizedBox(height: 16),
+
+                  /// 이미지 표시 (imageBytes → imageUrl 순서)
+                  if (post.imageBytes != null)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
-                      child: post.imageUrl!.startsWith('assets/')
+                      child: Image.memory(
+                        post.imageBytes!,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  else if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: post.imageUrl!.startsWith("assets/")
                           ? Image.asset(post.imageUrl!, fit: BoxFit.cover)
                           : Image.file(File(post.imageUrl!), fit: BoxFit.cover),
                     ),
 
                   const SizedBox(height: 20),
+
+                  /// 좋아요/싫어요/댓글수
+                  _buildReactionBar(post),
+                  const SizedBox(height: 20),
+
                   const Divider(color: Colors.white10, thickness: 1),
                   const SizedBox(height: 12),
 
-                  // ✅ 댓글 리스트
                   Text("댓글 ${post.comments.length}",
                       style: const TextStyle(
                           color: Colors.white, fontWeight: FontWeight.bold)),
@@ -131,13 +145,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
           ),
 
-          // 댓글 입력창
           _buildCommentInput(),
         ],
       ),
     );
   }
 
+  // ---------------- Header ----------------
   Widget _buildHeader(Post post) {
     return Row(
       children: [
@@ -146,26 +160,60 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              post.username,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-            const Text(
-              "10분 전",
-              style: TextStyle(color: Colors.grey, fontSize: 11),
-            ),
+            Text(post.username,
+                style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14)),
+            const Text("방금 전",
+                style: TextStyle(color: Colors.grey, fontSize: 11)),
           ],
         ),
       ],
     );
   }
 
+  // ---------------- Reaction Bar ----------------
+  Widget _buildReactionBar(Post post) {
+    return Row(
+      children: [
+        IconButton(
+          icon: Icon(
+            post.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+            color: post.isLiked ? AppColors.primary : Colors.grey,
+          ),
+          onPressed: () {
+            setState(() => post.toggleLike());
+          },
+        ),
+        Text("${post.likes}", style: const TextStyle(color: Colors.grey)),
+
+        const SizedBox(width: 16),
+
+        IconButton(
+          icon: Icon(
+            post.isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
+            color: post.isDisliked ? AppColors.primary : Colors.grey,
+          ),
+          onPressed: () {
+            setState(() => post.toggleDislike());
+          },
+        ),
+        Text("${post.dislikes}", style: const TextStyle(color: Colors.grey)),
+
+        const SizedBox(width: 16),
+
+        const Icon(Icons.chat_bubble_outline, color: Colors.grey),
+        const SizedBox(width: 4),
+        Text("${post.comments.length}",
+            style: const TextStyle(color: Colors.grey)),
+      ],
+    );
+  }
+
+  // ---------------- Comment Item ----------------
   Widget _buildCommentItem(int index, Comment comment) {
-    final avatarPath = comment.avatarUrl?.isNotEmpty == true
+    final avatarPath = (comment.avatarUrl?.isNotEmpty == true)
         ? comment.avatarUrl!
         : 'assets/posters/insideout.jpg';
 
@@ -183,14 +231,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      comment.username,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
+                    Text(comment.username,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13)),
                     if (comment.username == myNickname)
                       GestureDetector(
                         onTap: () => _showDeleteConfirmDialog(index),
@@ -203,10 +248,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Text(
                   comment.text,
                   style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
+                      color: Colors.white70, fontSize: 14, height: 1.4),
                 ),
               ],
             ),
@@ -216,6 +258,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
+  // ---------------- Delete Dialog ----------------
   Future<void> _showDeleteConfirmDialog(int index) async {
     return showDialog<void>(
       context: context,
@@ -246,6 +289,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
+  // ---------------- Comment Input ----------------
   Widget _buildCommentInput() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

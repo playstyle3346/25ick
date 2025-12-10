@@ -31,7 +31,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty) return;
 
-    AppState().addComment(widget.post, text); // ✅ 전역 상태 업데이트
+    AppState().addComment(widget.post, text);
 
     _commentCtrl.clear();
     FocusScope.of(context).unfocus();
@@ -59,8 +59,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: Text("${post.username}님의 포스트",
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+        title: Text(
+          "${post.username}님의 포스트",
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+        ),
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
         elevation: 0,
       ),
@@ -75,15 +77,32 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 children: [
                   _buildHeader(post),
                   const SizedBox(height: 16),
+
+                  // ✅ 제목
                   Text(
                     post.title,
                     style: const TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 28,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // ✅ 본문 내용 추가 (누락되었던 부분)
+                  if (post.content.isNotEmpty) ...[
+                    Text(
+                      post.content,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 15,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ✅ 이미지 (있을 경우만)
                   if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
@@ -91,21 +110,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ? Image.asset(post.imageUrl!, fit: BoxFit.cover)
                           : Image.file(File(post.imageUrl!), fit: BoxFit.cover),
                     ),
+
                   const SizedBox(height: 20),
                   const Divider(color: Colors.white10, thickness: 1),
                   const SizedBox(height: 12),
+
+                  // ✅ 댓글 리스트
                   Text("댓글 ${post.comments.length}",
                       style: const TextStyle(
                           color: Colors.white, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
+
                   ...post.comments.asMap().entries.map((entry) {
                     return _buildCommentItem(entry.key, entry.value);
                   }).toList(),
+
                   const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
+
+          // 댓글 입력창
           _buildCommentInput(),
         ],
       ),
@@ -120,13 +146,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(post.username,
-                style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14)),
-            const Text("10분 전",
-                style: TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(
+              post.username,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            const Text(
+              "10분 전",
+              style: TextStyle(color: Colors.grey, fontSize: 11),
+            ),
           ],
         ),
       ],
@@ -134,8 +165,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Widget _buildCommentItem(int index, Comment comment) {
-    final avatarPath =
-    comment.avatarUrl?.isNotEmpty == true ? comment.avatarUrl! : 'assets/posters/insideout.jpg';
+    final avatarPath = comment.avatarUrl?.isNotEmpty == true
+        ? comment.avatarUrl!
+        : 'assets/posters/insideout.jpg';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -151,11 +183,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(comment.username,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13)),
+                    Text(
+                      comment.username,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                     if (comment.username == myNickname)
                       GestureDetector(
                         onTap: () => _showDeleteConfirmDialog(index),
@@ -165,9 +200,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(comment.text,
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 14, height: 1.4)),
+                Text(
+                  comment.text,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -237,8 +277,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   shape: BoxShape.circle,
                   color: AppColors.primary,
                 ),
-                child:
-                const Icon(Icons.send, color: Colors.black, size: 20),
+                child: const Icon(Icons.send, color: Colors.black, size: 20),
               ),
             ),
           ],

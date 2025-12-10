@@ -28,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
     "assets/posters/soul.jpg",
     "assets/posters/spiderman.jpg",
     "assets/posters/yourname.jpg",
-    "assets/posters/default.jpg",
     "assets/posters/reze.jpg",
     "assets/posters/kaguyahime.jpg",
     "assets/posters/nowyouseeme.jpg",

@@ -106,6 +106,7 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
                   ),
                   const SizedBox(width: 12),
 
+                  // ✅ 이미지 미리보기 삭제 후, 텍스트 전체 확장
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,15 +134,6 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                    ),
-                  ),
-
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[700],
-                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ],

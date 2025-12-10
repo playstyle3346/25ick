@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_colors.dart';
+import 'poster_preview_screen.dart';
 
 class PosterMakeScreen extends StatefulWidget {
   const PosterMakeScreen({super.key});
@@ -11,28 +14,25 @@ class PosterMakeScreen extends StatefulWidget {
 }
 
 class _PosterMakeScreenState extends State<PosterMakeScreen> {
-  File? _uploadedImage;
-  String? selectedPoster; // assets 선택한 포스터
+  Uint8List? imageBytes;          // 🔥 Web & Mobile 모두 지원
+  File? _imageFile;               // 모바일 전용
   final TextEditingController _textController = TextEditingController();
 
-  final List<String> posters = [
-    "assets/posters/poster1.jpg",
-    "assets/posters/poster2.jpg",
-    "assets/posters/poster3.jpg",
-    "assets/posters/poster4.jpg",
-    "assets/posters/poster5.jpg",
-  ];
-
-  /// 🔥 업로드 이미지 선택
+  /// 🔥 이미지 업로드 (Web은 bytes, Mobile은 File)
   Future<void> pickUserImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
 
     if (file != null) {
-      setState(() {
-        _uploadedImage = File(file.path);
-        selectedPoster = null; // 업로드하면 기존 선택 해제
-      });
+      if (kIsWeb) {
+        // Web → Uint8List
+        imageBytes = await file.readAsBytes();
+      } else {
+        // Mobile → File
+        _imageFile = File(file.path);
+      }
+
+      setState(() {});
     }
   }
 
@@ -54,18 +54,11 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// -------------------------------
-            /// 포스터 선택 안내
-            /// -------------------------------
-            const Text(
-              "포스터를 선택하세요",
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
+            const Text("포스터를 선택하세요",
+                style: TextStyle(color: Colors.white, fontSize: 18)),
             const SizedBox(height: 16),
 
-            /// -------------------------------
-            /// 🔥 사용자 업로드 버튼
-            /// -------------------------------
+            /// 🔥 이미지 업로드 박스
             InkWell(
               onTap: pickUserImage,
               child: Container(
@@ -73,38 +66,28 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
                 height: 220,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
+                  border: Border.all(color: AppColors.primary, width: 2),
                 ),
-                child: _uploadedImage == null
+                child: (imageBytes == null && _imageFile == null)
                     ? const Center(
                   child: Text(
                     "내 사진 업로드하기",
-                    style: TextStyle(color: AppColors.primary, fontSize: 16),
+                    style: TextStyle(
+                        color: AppColors.primary, fontSize: 16),
                   ),
                 )
                     : ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.file(
-                    _uploadedImage!,
-                    fit: BoxFit.cover,
-                  ),
+                  child: kIsWeb
+                      ? Image.memory(imageBytes!, fit: BoxFit.cover)
+                      : Image.file(_imageFile!, fit: BoxFit.cover),
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
 
-
-            /// -------------------------------
-            /// 포스터 문구 입력
-            /// -------------------------------
-            const Text(
-              "포스터 문구 입력",
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
+            const Text("포스터 문구 입력",
+                style: TextStyle(color: Colors.white, fontSize: 18)),
             const SizedBox(height: 12),
 
             TextField(
@@ -126,16 +109,14 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
 
             const SizedBox(height: 30),
 
-            /// -------------------------------
-            /// 미리보기 버튼
-            /// -------------------------------
+            /// 🔥 미리보기
             Center(
               child: InkWell(
                 onTap: () {
-                  if (_uploadedImage == null && selectedPoster == null) {
+                  if (imageBytes == null && _imageFile == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("포스터를 선택하거나 업로드해주세요."),
+                        content: Text("포스터에 사용할 사진을 업로드해주세요."),
                       ),
                     );
                     return;
@@ -145,79 +126,25 @@ class _PosterMakeScreenState extends State<PosterMakeScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PosterPreviewScreen(
-                        imageFile: _uploadedImage,
-                        assetPath: selectedPoster,
+                        bytes: imageBytes,
+                        file: _imageFile,
                         text: _textController.text,
                       ),
                     ),
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(color: AppColors.primary),
                   ),
-                  child: const Text("미리보기", style: TextStyle(color: AppColors.primary)),
+                  child: const Text("미리보기",
+                      style: TextStyle(color: AppColors.primary)),
                 ),
               ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// --------------------------------------------------------------
-/// 🔥 미리보기 화면
-/// --------------------------------------------------------------
-class PosterPreviewScreen extends StatelessWidget {
-  final File? imageFile; // 업로드 이미지
-  final String? assetPath; // assets 이미지
-  final String text;
-
-  const PosterPreviewScreen({
-    super.key,
-    required this.imageFile,
-    required this.assetPath,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Widget posterWidget = imageFile != null
-        ? Image.file(imageFile!, width: 300, fit: BoxFit.cover)
-        : Image.asset(assetPath!, width: 300, fit: BoxFit.cover);
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Center(
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            posterWidget,
-            Container(
-              width: 300,
-              padding: const EdgeInsets.all(10),
-              color: Colors.black.withOpacity(0.6),
-              child: Text(
-                text,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )
+            ),
           ],
         ),
       ),

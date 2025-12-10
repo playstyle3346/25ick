@@ -17,6 +17,7 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
       "time": "방금 전",
       "title": "안녕",
       "content": "안녕하세요",
+      // 기존 글 → isNew 없음
     },
     {
       "user": "유니",
@@ -66,6 +67,9 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
           );
 
           if (newPost != null) {
+            // ⭐ 새 글에는 isNew 플래그를 반드시 넣어준다
+            newPost["isNew"] = "true";
+
             setState(() {
               posts.insert(0, newPost);
             });
@@ -106,7 +110,6 @@ class _DiscussionListScreenState extends State<DiscussionListScreen> {
                   ),
                   const SizedBox(width: 12),
 
-                  // ✅ 이미지 미리보기 삭제 후, 텍스트 전체 확장
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

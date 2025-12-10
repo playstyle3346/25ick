@@ -1,11 +1,12 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../models/models.dart';
-import '../../theme/app_colors.dart';
+
+import '../models/models.dart';
+import '../theme/app_colors.dart';
 
 /// ------------------------------------------------------------
-///  대사 보관함 (추가 / 삭제 / 상세보기)
+///  대사 보관함 (에셋 + 업로드 이미지 모두 지원)
 /// ------------------------------------------------------------
 class QuoteArchiveScreen extends StatefulWidget {
   final List<Quote> quotes;
@@ -25,33 +26,37 @@ class _QuoteArchiveScreenState extends State<QuoteArchiveScreen> {
     _quotes = List.from(widget.quotes);
   }
 
-  /// ------------------------------------------------------------
-  /// Asset vs File 이미지 구분
-  /// ------------------------------------------------------------
-  ImageProvider _getImageProvider(String path) {
-    if (path.startsWith("assets/")) {
-      return AssetImage(path);
+  ImageProvider _getImageProvider(Quote quote) {
+    if (quote.imageBytes != null) {
+      return MemoryImage(quote.imageBytes!);
     }
-    return FileImage(File(path));
+    if (quote.imageUrl != null && quote.imageUrl!.isNotEmpty) {
+      return AssetImage(quote.imageUrl!);
+    }
+    return const AssetImage("assets/placeholder.png");
   }
 
-  /// ------------------------------------------------------------
-  /// 대사 추가
-  /// ------------------------------------------------------------
+  /// 대사 추가 (이미지 업로드 + 텍스트 입력)
   Future<void> _addQuote() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image == null) return;
+    final XFile? picked =
+    await _picker.pickImage(source: ImageSource.gallery);
+    Uint8List? bytes;
+    if (picked != null) {
+      bytes = await picked.readAsBytes();
+    }
 
     String text = "";
-    String source = "";
+    String movie = "";
 
     final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (_) {
         return AlertDialog(
           backgroundColor: AppColors.card,
-          title: const Text("명대사 추가",
-              style: TextStyle(color: AppColors.textPrimary)),
+          title: const Text(
+            "명대사 추가",
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -63,54 +68,49 @@ class _QuoteArchiveScreenState extends State<QuoteArchiveScreen> {
                 ),
                 onChanged: (v) => text = v,
               ),
+              const SizedBox(height: 8),
               TextField(
                 style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(
                   hintText: "영화 제목",
                   hintStyle: TextStyle(color: AppColors.textSecondary),
                 ),
-                onChanged: (v) => source = v,
+                onChanged: (v) => movie = v,
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("취소",
-                  style: TextStyle(color: AppColors.textSecondary)),
+              child: const Text(
+                "취소",
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(context, {
-                "text": text,
-                "source": source,
-              }),
-              child: const Text("확인", style: TextStyle(color: AppColors.primary)),
+              onPressed: () =>
+                  Navigator.pop(context, {"text": text.trim(), "movie": movie.trim()}),
+              child: const Text(
+                "확인",
+                style: TextStyle(color: AppColors.primary),
+              ),
             ),
           ],
         );
       },
     );
 
-    if (result == null || result["text"]!.trim().isEmpty) return;
+    if (result == null || result["text"]!.isEmpty) return;
 
     setState(() {
       _quotes.insert(
         0,
         Quote(
           text: result["text"]!,
-          source: result["source"]!,
-          imageUrl: image.path,
+          source: result["movie"] ?? "",
+          imageBytes: bytes, // ✅ 업로드 이미지 (없으면 null)
         ),
       );
-    });
-  }
-
-  /// ------------------------------------------------------------
-  /// 삭제 Dialog
-  /// ------------------------------------------------------------
-  void _deleteQuote(int index) {
-    setState(() {
-      _quotes.removeAt(index);
     });
   }
 
@@ -131,7 +131,7 @@ class _QuoteArchiveScreenState extends State<QuoteArchiveScreen> {
           ),
           TextButton(
             onPressed: () {
-              _deleteQuote(index);
+              setState(() => _quotes.removeAt(index));
               Navigator.pop(context);
             },
             child:
@@ -142,17 +142,16 @@ class _QuoteArchiveScreenState extends State<QuoteArchiveScreen> {
     );
   }
 
-  /// ------------------------------------------------------------
-  /// UI
-  /// ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text("대사 보관함",
-            style: TextStyle(
-                color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "대사 보관함",
+          style: TextStyle(
+              color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.background,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
@@ -188,7 +187,7 @@ class _QuoteArchiveScreenState extends State<QuoteArchiveScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image(
-                      image: _getImageProvider(quote.imageUrl),
+                      image: _getImageProvider(quote),
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
@@ -204,21 +203,22 @@ class _QuoteArchiveScreenState extends State<QuoteArchiveScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15),
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           quote.source,
                           style: const TextStyle(
-                              color: AppColors.textSecondary, fontSize: 13),
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.star_border,
-                      color: AppColors.primary, size: 22),
                 ],
               ),
             ),
@@ -229,18 +229,19 @@ class _QuoteArchiveScreenState extends State<QuoteArchiveScreen> {
   }
 }
 
-/// ------------------------------------------------------------
-///  상세보기 화면
-/// ------------------------------------------------------------
+/// 상세보기
 class QuoteDetailScreen extends StatelessWidget {
   final Quote quote;
   const QuoteDetailScreen({super.key, required this.quote});
 
-  ImageProvider _getImageProvider(String path) {
-    if (path.startsWith("assets/")) {
-      return AssetImage(path);
+  ImageProvider _getImageProvider() {
+    if (quote.imageBytes != null) {
+      return MemoryImage(quote.imageBytes!);
     }
-    return FileImage(File(path));
+    if (quote.imageUrl != null && quote.imageUrl!.isNotEmpty) {
+      return AssetImage(quote.imageUrl!);
+    }
+    return const AssetImage("assets/placeholder.png");
   }
 
   @override
@@ -250,7 +251,7 @@ class QuoteDetailScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // 상단 버튼 영역
+            // 상단 버튼
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -259,15 +260,9 @@ class QuoteDetailScreen extends StatelessWidget {
                   const Icon(Icons.close, color: Colors.white, size: 28),
                   onPressed: () => Navigator.pop(context),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.share,
-                      color: AppColors.textSecondary, size: 22),
-                  onPressed: () {},
-                ),
               ],
             ),
-
-            // 본문
+            // 내용
             Expanded(
               child: Center(
                 child: Padding(
@@ -284,7 +279,7 @@ class QuoteDetailScreen extends StatelessWidget {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image(
-                            image: _getImageProvider(quote.imageUrl),
+                            image: _getImageProvider(),
                             height: 220,
                             fit: BoxFit.cover,
                           ),
@@ -293,9 +288,10 @@ class QuoteDetailScreen extends StatelessWidget {
                         Text(
                           quote.source,
                           style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 17),
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(

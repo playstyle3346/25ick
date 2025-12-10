@@ -27,20 +27,22 @@ class MySceneScreen extends StatelessWidget {
       ),
 
       body: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
+
         children: [
           // --------------------------
-          // 장면 보관함
+          // 장면 보관함 (따뜻한 살구색)
           // --------------------------
           SceneMenuCard(
-            title: '장면 보관함',
-            imageUrl: 'assets/images/scene1.jpg',
+            title: "장면 보관함",
+            backgroundColor: const Color(0xFFF6D7A7),
+            textColor: Colors.black87,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => SceneArchiveScreen(
-                    sceneGroups: DummyRepository.sceneGroups, // static
+                    sceneGroups: DummyRepository.sceneGroups,
                   ),
                 ),
               );
@@ -50,17 +52,18 @@ class MySceneScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // --------------------------
-          // 대사 보관함
+          // 대사 보관함 (라이트 옐로우)
           // --------------------------
           SceneMenuCard(
-            title: '대사 보관함',
-            imageUrl: 'assets/images/scene2.jpg',
+            title: "대사 보관함",
+            backgroundColor: const Color(0xFFFFF3B0),
+            textColor: Colors.black87,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => QuoteArchiveScreen(
-                    quotes: DummyRepository.quotes, // static
+                    quotes: DummyRepository.quotes,
                   ),
                 ),
               );
@@ -70,17 +73,18 @@ class MySceneScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // --------------------------
-          // 감성노트
+          // 감성 노트 (라이트 민트색)
           // --------------------------
           SceneMenuCard(
-            title: '감성 노트',
-            imageUrl: 'assets/images/scene3.jpg',
+            title: "감성 노트",
+            backgroundColor: const Color(0xFFCCF5D3),
+            textColor: Colors.black87,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => EmotionNoteScreen(
-                    notes: DummyRepository.notes, // static
+                    notes: DummyRepository.notes,
                   ),
                 ),
               );

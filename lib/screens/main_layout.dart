@@ -14,20 +14,25 @@ import 'mypage/mypage_screen.dart';
 final GlobalKey<_MainLayoutState> mainLayoutKey = GlobalKey<_MainLayoutState>();
 
 class MainLayout extends StatefulWidget {
-  const MainLayout({super.key});
+  final int initialIndex; // ← 초기 인덱스 받기
+
+  const MainLayout({super.key, this.initialIndex = 0});
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   @override
   void initState() {
     super.initState();
 
-    /// 앱 첫 실행 시 DummyRepository → AppState.posts로 복사
+    // 초기 탭 설정
+    _selectedIndex = widget.initialIndex;
+
+    // 앱 첫 실행 시 posts 복사
     if (AppState().posts.isEmpty) {
       AppState().posts = List.from(DummyRepository.posts);
     }

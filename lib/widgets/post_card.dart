@@ -8,8 +8,6 @@ import '../state/app_state.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
-
-  /// 삭제/팔로우/좋아요 후 상위 리스트 업데이트용
   final VoidCallback? onContentChanged;
 
   const PostCard({
@@ -23,7 +21,7 @@ class PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<PostCard> {
-  // 이미지 로드 (assets / file / memory 지원)
+  /// 이미지 렌더링
   Widget _buildImage(Post post) {
     if (post.imageBytes != null) {
       return Image.memory(
@@ -61,8 +59,10 @@ class _PostCardState extends State<PostCard> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.card,
         title: const Text("포스트 삭제", style: TextStyle(color: Colors.white)),
-        content: const Text("정말 삭제하시겠습니까?",
-            style: TextStyle(color: Colors.grey)),
+        content: const Text(
+          "정말 삭제하시겠습니까?",
+          style: TextStyle(color: Colors.grey),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -85,27 +85,26 @@ class _PostCardState extends State<PostCard> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
-
-    // 🔥 로그인한 닉네임 적용
     final currentUser = AppState().userNickname;
-    final displayName = (post.username == "Guest" || post.username.isEmpty)
-        ? currentUser
-        : post.username;
-
-    final isMyPost = displayName == currentUser;
+    final author = post.username.isNotEmpty ? post.username : "Guest";
+    final isMyPost = author == currentUser;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque, // ← 롱프레스 확실히 인식시키는 핵심 옵션
+
       onTap: () async {
         await Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => PostDetailScreen(post: post),
-          ),
+          MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)),
         );
-
         if (widget.onContentChanged != null) widget.onContentChanged!();
         setState(() {});
       },
+
+      onLongPress: () {
+        if (isMyPost) _deletePost();
+      },
+
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.all(14),
@@ -113,12 +112,13 @@ class _PostCardState extends State<PostCard> {
           color: AppColors.card,
           borderRadius: BorderRadius.circular(12),
         ),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ------------------------------
-            //   상단: 프로필 + 작성자 정보
-            // ------------------------------
+            // ------------------------------------
+            //   상단 : 프로필 + 닉네임 + 시간
+            // ------------------------------------
             Row(
               children: [
                 CircleAvatar(
@@ -131,22 +131,30 @@ class _PostCardState extends State<PostCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(displayName,
-                          style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.bold)),
-                      const Text("방금 전",
-                          style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(
+                        author,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        "방금 전",
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
                     ],
                   ),
                 ),
 
-                // 삭제 or 팔로우 버튼
+                // 🔥 삭제 버튼 또는 팔로우 버튼
                 isMyPost
                     ? IconButton(
                   onPressed: _deletePost,
-                  icon: const Icon(Icons.delete_outline,
-                      color: Colors.grey, size: 20),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
                 )
                     : GestureDetector(
                   onTap: () {
@@ -184,25 +192,28 @@ class _PostCardState extends State<PostCard> {
             Text(
               post.title,
               style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
 
             const SizedBox(height: 6),
 
-            // 본문
+            // 본문 미리보기
             Text(
               post.content,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 14),
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
             ),
 
             const SizedBox(height: 10),
 
-            // 이미지 영역
+            // 이미지 표시
             if (post.imageBytes != null ||
                 (post.imageUrl != null && post.imageUrl!.isNotEmpty))
               ClipRRect(
@@ -212,16 +223,15 @@ class _PostCardState extends State<PostCard> {
 
             const SizedBox(height: 10),
 
-            // ------------------------------
-            //  좋아요 / 싫어요 / 댓글 갯수
-            // ------------------------------
+            // ------------------------------------
+            //   좋아요 / 싫어요 / 댓글
+            // ------------------------------------
             Row(
               children: [
                 IconButton(
                   icon: Icon(
                     post.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                    color:
-                    post.isLiked ? AppColors.primary : Colors.grey,
+                    color: post.isLiked ? AppColors.primary : Colors.grey,
                   ),
                   onPressed: () {
                     setState(() => post.toggleLike());
@@ -229,8 +239,7 @@ class _PostCardState extends State<PostCard> {
                       widget.onContentChanged!();
                   },
                 ),
-                Text("${post.likes}",
-                    style: const TextStyle(color: Colors.grey)),
+                Text("${post.likes}", style: const TextStyle(color: Colors.grey)),
 
                 const SizedBox(width: 16),
 
@@ -239,9 +248,7 @@ class _PostCardState extends State<PostCard> {
                     post.isDisliked
                         ? Icons.thumb_down
                         : Icons.thumb_down_outlined,
-                    color: post.isDisliked
-                        ? AppColors.primary
-                        : Colors.grey,
+                    color: post.isDisliked ? AppColors.primary : Colors.grey,
                   ),
                   onPressed: () {
                     setState(() => post.toggleDislike());

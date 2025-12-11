@@ -38,7 +38,6 @@ class MoviePreferenceResultScreen extends StatelessWidget {
           )
         ],
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -50,17 +49,17 @@ class MoviePreferenceResultScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-
             Text(
               userType.isNotEmpty
                   ? "당신은 '$userType' 유형이에요."
                   : "당신의 영화 취향을 분석했어요.",
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 14),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 24),
 
+            /// 메인 추천 포스터 카드
             _posterCard(recommendations),
 
             const SizedBox(height: 24),
@@ -79,11 +78,14 @@ class MoviePreferenceResultScreen extends StatelessWidget {
                 children: recommendations
                     .map(
                       (title) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding:
+                    const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
                       "· $title",
                       style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 14),
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 )
@@ -92,11 +94,14 @@ class MoviePreferenceResultScreen extends StatelessWidget {
               const SizedBox(height: 24),
             ],
 
-            // 버튼 2개
+            /// 버튼 2개
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _roundButton(label: "다시 시작", onTap: () => Navigator.pop(context)),
+                _roundButton(
+                  label: "다시 시작",
+                  onTap: () => Navigator.pop(context),
+                ),
                 _roundButton(
                   label: "분석 결과",
                   onTap: () {
@@ -116,10 +121,10 @@ class MoviePreferenceResultScreen extends StatelessWidget {
     );
   }
 
-  /// 메인 포스터 카드
+  /// 메인 포스터 카드 (첫 번째 추천 영화 기준)
   Widget _posterCard(List<String> recommendations) {
     final mainTitle =
-    recommendations.isNotEmpty ? recommendations.first : "블레이드러너 2049";
+    recommendations.isNotEmpty ? recommendations.first : "라라랜드";
     final posterPath = MovieAlgorithm.posterPaths[mainTitle];
 
     return Container(
@@ -134,10 +139,12 @@ class MoviePreferenceResultScreen extends StatelessWidget {
           Text(
             "<$mainTitle>",
             style: const TextStyle(
-                color: AppColors.primary, fontSize: 20, fontWeight: FontWeight.bold),
+              color: AppColors.primary,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
-
           SizedBox(
             height: 220,
             child: AspectRatio(
@@ -157,23 +164,30 @@ class MoviePreferenceResultScreen extends StatelessWidget {
   }
 
   /// 둥근 버튼
-  Widget _roundButton({required String label, required VoidCallback onTap}) {
+  Widget _roundButton({
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.primary, width: 1.2),
           borderRadius: BorderRadius.circular(30),
         ),
-        child: Text(label, style: const TextStyle(color: AppColors.primary)),
+        child: Text(
+          label,
+          style: const TextStyle(color: AppColors.primary),
+        ),
       ),
     );
   }
 }
 
 /// ===================================================================
-/// 2) 취향 분석 화면 — 유형별 키워드 완전 반영
+/// 2) 취향 분석 화면 — 유형별 키워드 사용
 /// ===================================================================
 class MovieTasteAnalysisScreen extends StatelessWidget {
   const MovieTasteAnalysisScreen({super.key});
@@ -181,8 +195,6 @@ class MovieTasteAnalysisScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userType = MovieAlgorithm.lastUserType;
-
-    /// 🔥 유형별 키워드 불러오기
     final keywords = MovieAlgorithm.typeKeywords[userType] ?? [];
 
     return Scaffold(
@@ -207,7 +219,6 @@ class MovieTasteAnalysisScreen extends StatelessWidget {
           )
         ],
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -216,17 +227,15 @@ class MovieTasteAnalysisScreen extends StatelessWidget {
               userType.isNotEmpty
                   ? "당신의 영화 취향, '$userType' 유형으로 분석되었어요."
                   : "당신의 영화 취향을 분석해 드려요.",
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+              style:
+              const TextStyle(color: Colors.white, fontSize: 18),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 20),
-
             _tagLabel(userType.isNotEmpty ? userType : "취향 분석 중"),
-
             const SizedBox(height: 30),
 
-            /// ---------- 유형별 키워드 4개 ----------
+            /// 유형별 키워드 4개 Grid
             GridView.count(
               shrinkWrap: true,
               crossAxisCount: 2,
@@ -236,9 +245,7 @@ class MovieTasteAnalysisScreen extends StatelessWidget {
               childAspectRatio: 2.8,
               children: keywords.map((k) => _TagChip(k)).toList(),
             ),
-
             const SizedBox(height: 40),
-
             _nextButton(context),
           ],
         ),
@@ -246,7 +253,6 @@ class MovieTasteAnalysisScreen extends StatelessWidget {
     );
   }
 
-  /// 완료 버튼
   Widget _nextButton(BuildContext context) {
     return InkWell(
       onTap: () {
@@ -257,20 +263,24 @@ class MovieTasteAnalysisScreen extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.primary),
           borderRadius: BorderRadius.circular(30),
         ),
-        child: const Text("완료", style: TextStyle(color: AppColors.primary)),
+        child: const Text(
+          "완료",
+          style: TextStyle(color: AppColors.primary),
+        ),
       ),
     );
   }
 
-  /// 유형 라벨
   Widget _tagLabel(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding:
+      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
@@ -291,12 +301,14 @@ class _TagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding:
+      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.primary),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(text, style: const TextStyle(color: AppColors.primary)),
+      child:
+      Text(text, style: const TextStyle(color: AppColors.primary)),
     );
   }
 }
@@ -334,7 +346,6 @@ class MovieTagRecommendationScreen extends StatelessWidget {
           )
         ],
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -343,19 +354,19 @@ class MovieTagRecommendationScreen extends StatelessWidget {
               userType.isNotEmpty
                   ? "'$userType'님 취향을 분석해 추천드려요!"
                   : "당신의 취향에 맞는 영화를 추천드려요!",
-              style: const TextStyle(color: Colors.white, fontSize: 17),
+              style:
+              const TextStyle(color: Colors.white, fontSize: 17),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 30),
-
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
                 childAspectRatio: 0.62,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                children: recs.map((title) => _movie(title)).toList(),
+                children:
+                recs.map((title) => _movie(title)).toList(),
               ),
             ),
           ],
@@ -379,7 +390,10 @@ class MovieTagRecommendationScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(title, style: const TextStyle(color: Colors.white)),
+        Text(
+          title,
+          style: const TextStyle(color: Colors.white),
+        ),
       ],
     );
   }
